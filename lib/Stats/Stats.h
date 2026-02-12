@@ -8,7 +8,7 @@
 
 #include <esp_log.h>
 
-#define DAY_DURATION 24 // Duration of a day in seconds
+#define DAY_DURATION 86400 // Duration of a day in seconds
 
 #define EggDuration DAY_DURATION / 24          // Duration of the egg stage in seconds      [1 hour]
 #define BabyDuration DAY_DURATION * 3          // Duration of the baby stage in seconds     [3 days]

@@ -14,14 +14,6 @@
 #include <freertos/task.h>
 #include <esp_timer.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void StatsUpdate_Task(void* pvParameters);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // CORESTATS_H

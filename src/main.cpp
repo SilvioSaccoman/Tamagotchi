@@ -1,11 +1,11 @@
 #include <Arduino.h>
-#include <TFT_eSPI.h>
+#include "Display.h"
 #include "CoreStats.h"
-
+#include "Sprites.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
-    // Initialization of the stats and state
+// Initialization of the stats and state
 struct Stats stats = {
     .hungerLevel = 100,
     .healthLevel = 100,
@@ -24,17 +24,10 @@ struct State currentState = {
 
 extern "C" void app_main() {
     initArduino();
-    
-    tft.init();
-    tft.setRotation(0); // 0 = Verticale (Portrait)
-    tft.fillScreen(TFT_BLACK);
-    
-    tft.setTextColor(TFT_CYAN);
-    tft.drawCentreString("Config Caricata!", 120, 160, 4); // Test con Font 4
-
-
+    Display_init();    
 
     xTaskCreate(StatsUpdate_Task, "StatsUpdate_Task", 4096, NULL, 1, NULL);
+    xTaskCreatePinnedToCore(DisplayUpdate_Task, "DisplayUpdate_Task", 4096, NULL, 1, NULL, 1); // Run the display task on core 1 to avoid conflicts with the stats update task
     
     while(1) {
         ESP_LOGI("STATS", "Current_stats: Hunger: %d, Health: %d, Energy: %d, Happiness: %d, Evolution: %d", 
