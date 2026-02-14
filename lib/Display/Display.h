@@ -11,6 +11,7 @@
 #include "CoreStats.h"
 
 void Display_init();
+void pushImageFlipped(TFT_eSprite* sprite, int32_t x, int32_t y, int32_t w, int32_t h, const uint16_t* data);
 void DisplayUpdate_Task(void* pvParameters);
 
 #endif // DISPLAY_H

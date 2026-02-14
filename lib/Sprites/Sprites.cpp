@@ -216,3 +216,15 @@ const uint16_t* const animEGG[] = {
   sprite_EGG0,
   sprite_EGG2,
 };
+
+Animation eggAnimation = {
+  .frames = animEGG,
+  .width = 64,
+  .height = 64,
+  .frameCount = 4,
+};
+
+// BIRTH ANIMATION
+
+
+// CHILD ANIMATION

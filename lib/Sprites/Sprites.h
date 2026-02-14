@@ -9,9 +9,14 @@
 #include <pgmspace.h>
 #include <stdint.h>
 
+struct Animation {
+    const uint16_t* const* frames; // Array of pointers to frame data
+    int width;               // Width of each frame
+    int height;              // Height of each frame
+    uint8_t frameCount;             // Number of frames in the animation
+};
+
 // -------------- EGG STATE SPRITES --------------
-#define SPRITE_EGG0_HEIGHT 64
-#define SPRITE_EGG0_WIDTH 64
 
 extern const uint16_t sprite_EGG0[] PROGMEM;
 extern const uint16_t sprite_EGG1[] PROGMEM;
@@ -19,7 +24,7 @@ extern const uint16_t sprite_EGG2[] PROGMEM;
 
 extern const uint16_t* const animEGG[] PROGMEM;
 
-
+extern Animation eggAnimation;
 
 
 
