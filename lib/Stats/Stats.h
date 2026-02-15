@@ -10,17 +10,15 @@
 
 #define DAY_DURATION 86400 // Duration of a day in seconds
 
-#define EggDuration DAY_DURATION / 24          // Duration of the egg stage in seconds      [1 hour]
-#define BabyDuration DAY_DURATION * 3          // Duration of the baby stage in seconds     [3 days]
-#define ChildDuration DAY_DURATION * 8         // Duration of the child stage in seconds    [8 days]
-#define TeenagerDuration DAY_DURATION * 8      // Duration of the teenager stage in seconds [8 days]
+#define EggDuration DAY_DURATION / 3600          // Duration of the egg stage in seconds      [1 hour]
+#define ChildDuration DAY_DURATION * 10         // Duration of the child stage in seconds    [8 days]
+#define TeenagerDuration DAY_DURATION * 10      // Duration of the teenager stage in seconds [8 days]
 #define AdultDuration DAY_DURATION * 38        // Duration of the adult stage in seconds    [38 days]
 #define ElderDuration DAY_DURATION * 38        // Duration of the elder stage in seconds    [38 days]
 
 // Tamagotch evolution stages
 enum Evolution {
     EGG,
-    BABY,
     CHILD,
     TEENAGER,
     ADULT,

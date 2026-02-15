@@ -18,3 +18,7 @@ void Eating(struct Stats* stats){
     }
     ESP_LOGI("Stats", "Eating... Hunger level: %d", stats->hungerLevel);
 }
+
+void Birth(struct Stats* stats){
+}
+    

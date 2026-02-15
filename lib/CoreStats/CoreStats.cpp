@@ -8,10 +8,14 @@
 extern struct Stats stats;
 extern struct State currentState;
 
+bool isHatching = false;
+bool isHatched = false;
+Animation* currentAnimation = &eggAnimation;
+int childStartTime = 0; // Variable to track the start time of the child stage
+
+
 void StatsUpdate_Task(void* pvParameters) {
     // Variables to track the start time of each evolution stage
-    int babyStartTime = 0; // Variable to track the start time of the baby stage
-    int childStartTime = 0; // Variable to track the start time of the child stage
     int teenagerStartTime = 0; // Variable to track the start time of the teenager
     int adultStartTime = 0; // Variable to track the start time of the adult stage
 
@@ -77,14 +81,9 @@ void StatsUpdate_Task(void* pvParameters) {
 
 
         // --------------------------- EVOLUTION UPDATE ---------------------------
-        if (stats.life_seconds >= EggDuration && currentState.evolution == EGG && stats.healthLevel > 75) {
-            currentState.evolution = BABY;
-            babyStartTime = stats.life_seconds;
-            ESP_LOGI("CoreStats", "Evolution: Baby");
-        }
-        else if (stats.life_seconds - babyStartTime >= BabyDuration && currentState.evolution == BABY && stats.healthLevel > 75) {
-            currentState.evolution = CHILD;
-            childStartTime = stats.life_seconds;
+        if (stats.life_seconds >= EggDuration && currentState.evolution == EGG && stats.healthLevel > 75 && !isHatched) {
+            isHatching = true;
+            isHatched = true;
             ESP_LOGI("CoreStats", "Evolution: Child");
         }
         else if (stats.life_seconds - childStartTime >= ChildDuration && currentState.evolution == CHILD && stats.healthLevel > 75) {
@@ -104,3 +103,26 @@ void StatsUpdate_Task(void* pvParameters) {
     }
 }
 
+void updateCurrentAnimation() {
+    if (isHatching) {
+        currentAnimation = &birthAnimation;
+        return; // During hatching, we want to show the birth animation regardless of the state
+    }
+    // Check the current evolution stage and update the current animation accordingly
+    if (currentState.evolution == EGG) {
+        currentAnimation = &eggAnimation;
+    } 
+    else if (currentState.evolution == CHILD) {
+        // 2. Controllo Stati prioritari (Malattia > Fame > Camminata)
+        if (stats.healthLevel < 20) {
+            currentAnimation = &childWalkAnimationS;
+            if (stats.hungerLevel < 40) {
+                currentAnimation = &childWalkAnimationHS;
+            }
+        } else if (stats.hungerLevel < 40) {
+            currentAnimation = &childWalkAnimationH;
+        } else {
+            currentAnimation = &childWalkAnimation;
+        }
+    }
+}

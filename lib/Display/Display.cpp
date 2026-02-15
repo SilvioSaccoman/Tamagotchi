@@ -9,13 +9,13 @@ extern TFT_eSPI tft;
 extern struct Stats stats;
 extern struct State currentState;
 
-TFT_eSprite eggSprite = TFT_eSprite(&tft); // Create the sprite
+TFT_eSprite TamagotchiSprite = TFT_eSprite(&tft); // Create the sprite
 
 void Display_init() {
     tft.init();
     tft.setRotation(0); // 0 = Vertical (Portrait), 1 = Horizontal (Landscape), 2 = Vertical Inverted, 3 = Horizontal Inverted
     tft.fillScreen(TFT_BLACK);
-    eggSprite.createSprite(64, 64); // Allocate 32x32 pixel in RAM 
+    TamagotchiSprite.createSprite(64, 64); // Allocate 32x32 pixel in RAM 
 };
 
 void pushImageFlipped(TFT_eSprite* sprite, int32_t x, int32_t y, int32_t w, int32_t h, const uint16_t* data) {
@@ -29,20 +29,23 @@ void pushImageFlipped(TFT_eSprite* sprite, int32_t x, int32_t y, int32_t w, int3
 }
 
 void DisplayUpdate_Task(void* pvParameters) {
-    int frameIdx = 0; // index
-
-    // Of my egg, to be better handled once I have multiple animations
-    const int totalFrames = 4; 
-    
-    int currentX = (tft.width() - SPRITE_EGG0_WIDTH) / 2;
-    int yPos = tft.height() - SPRITE_EGG0_HEIGHT - 10;
-
-    int targetX = currentX; // Target X position for walking
-    int speed =2;
-    bool facingLeft = false; // Direction the egg is facing
+    int frameIdx = 0;
+    int currentX = (tft.width() - 64) / 2;
+    int yPos = tft.height() - 64 - 10;
+    int targetX = currentX;
+    int speed = 2;
+    bool facingLeft = false;
 
     while(1) {
         
+        updateCurrentAnimation(); // Update the current animation based on the current state
+
+        // Safety check per cambio animazione
+        if (frameIdx >= currentAnimation->frameCount) {
+            frameIdx = 0;
+        }
+
+        // Movement logic: if the sprite is close to the target, choose a new random target with a small probability
         if (abs(currentX - targetX) < speed) {
             if (random(0, 100) < 5) { // 5% probability to change direction
                 targetX = random(0, tft.width() - 64);
@@ -58,9 +61,8 @@ void DisplayUpdate_Task(void* pvParameters) {
             }
         }
         
+        // Text update
         tft.setTextColor(TFT_WHITE, TFT_BLACK);
-        
-        // Stats update
         tft.setCursor(0, 0);
         tft.setTextColor(TFT_WHITE);
         tft.setTextSize(2);
@@ -70,22 +72,32 @@ void DisplayUpdate_Task(void* pvParameters) {
         tft.printf("Happiness: %d\n", stats.happinessLevel);
         tft.printf("Evolution: %d\n", currentState.evolution);
 
-        // Frame update
-        eggSprite.fillSprite(TFT_BLACK); 
+        // Rendering Sprite
+        TamagotchiSprite.fillSprite(TFT_BLACK); 
+        const uint16_t* currentFrameData = currentAnimation->frames[frameIdx];
 
         if (facingLeft) {
-            pushImageFlipped(&eggSprite, 0, 0, 64, 64, animEGG[frameIdx]);
+            pushImageFlipped(&TamagotchiSprite, 0, 0, currentAnimation->width, currentAnimation->height, currentFrameData);
         } else {
-            eggSprite.pushImage(0, 0, 64, 64, animEGG[frameIdx]);
+            TamagotchiSprite.pushImage(0, 0, currentAnimation->width, currentAnimation->height, currentFrameData);
         }
 
-        eggSprite.pushSprite(currentX, yPos); // Push the sprite to the TFT at the specified position
+        TamagotchiSprite.pushSprite(currentX, yPos);
 
-        // Frame index update
-        frameIdx = (frameIdx + 1) % totalFrames;
+        if (isHatching) {
+            if (frameIdx >= currentAnimation->frameCount - 1) {
+                isHatching = false; 
+                currentState.evolution = CHILD;
+                childStartTime = stats.life_seconds;
+                frameIdx = 0;
+            } else {
+                frameIdx++;
+            }
+        } else {
+            frameIdx = (frameIdx + 1) % currentAnimation->frameCount;
+        }
 
-        vTaskDelay(pdMS_TO_TICKS(150)); 
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
-
 
