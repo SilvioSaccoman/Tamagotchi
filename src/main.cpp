@@ -7,7 +7,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 // Initialization of the stats and state
 struct Stats stats = {
-    .hungerLevel = 100,
+    .hungerLevel = 20,
     .healthLevel = 100,
     .energyLevel = 100,
     .happinessLevel = 100,
@@ -22,10 +22,32 @@ struct State currentState = {
     .happinessLevel = UNHAPPY
 };
 
+#define BUTTON_RESET_PIN 0 // Often the 'BOOT' button on ESP32 boards
+
+// Dedicated Input Task
+void Input_Task(void* pvParameters) {
+    pinMode(BUTTON_RESET_PIN, INPUT_PULLUP);
+    bool lastState = HIGH;
+
+    while (1) {
+        bool currentState = digitalRead(BUTTON_RESET_PIN);
+        
+        // Simple Debounce: Trigger on Falling Edge (Pressed)
+        if (lastState == HIGH && currentState == LOW) {
+            Eating(&stats);
+            vTaskDelay(pdMS_TO_TICKS(200)); // Debounce delay
+        }
+        
+        lastState = currentState;
+        vTaskDelay(pdMS_TO_TICKS(50)); // Poll every 50ms
+    }
+}
+
 extern "C" void app_main() {
     initArduino();
     Display_init();    
-
+    
+    xTaskCreate(Input_Task, "Input_Task", 4096, NULL, 1, NULL);
     xTaskCreate(StatsUpdate_Task, "StatsUpdate_Task", 4096, NULL, 1, NULL);
     xTaskCreatePinnedToCore(DisplayUpdate_Task, "DisplayUpdate_Task", 4096, NULL, 1, NULL, 1); // Run the display task on core 1 to avoid conflicts with the stats update task
     

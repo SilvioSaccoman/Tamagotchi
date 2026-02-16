@@ -8,6 +8,8 @@
 
 #include "Stats.h"
 
+extern bool isEating; // Flag to indicate if the Tamagotchi is currently eating
+
 void Eating(struct Stats* stats);
 
 

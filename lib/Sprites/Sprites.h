@@ -25,13 +25,28 @@ extern const uint16_t sprite_EGG2[] PROGMEM;
 extern const uint16_t* const animEGG[] PROGMEM;
 
 // -------------- ANIMATIONS --------------
+// EGG
 extern Animation eggAnimation;
+
+// HATCHING
 extern Animation birthAnimation;
-extern Animation childWalkAnimation;
+
+// CHILD
+extern Animation childWalkAnimation; // Walking
 extern Animation childWalkAnimationH;
 extern Animation childWalkAnimationS;
 extern Animation childWalkAnimationHS;
 
+extern Animation childIdleAnimation; // Idle
+extern Animation childIdleAnimationH;
+extern Animation childIdleAnimationS;
+extern Animation childIdleAnimationHS;
 
+extern Animation childEatAnimation; // Eating
+extern Animation childEatAnimationH;
+extern Animation childEatAnimationS;
+extern Animation childEatAnimationHS;
+
+extern Animation childSleepAnimation; // Sleeping
 
 #endif // SPRITES_H

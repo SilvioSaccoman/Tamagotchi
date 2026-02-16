@@ -10,6 +10,9 @@ extern struct State currentState;
 
 bool isHatching = false;
 bool isHatched = false;
+bool isMoving = false;
+bool isEating = false;
+
 Animation* currentAnimation = &eggAnimation;
 int childStartTime = 0; // Variable to track the start time of the child stage
 
@@ -33,14 +36,28 @@ void StatsUpdate_Task(void* pvParameters) {
         ESP_LOGI("CoreStats", "Cycle time: %lld ms", StartCycleTime/1000);
 
         // --------------------------- HUNGER UPDATE ---------------------------
+        // STATS UPDATE
         // Each 864 seconds it loses 1 point in hunger (50 points in 12 hours)
         if (stats.life_seconds % 864 == 0) {
-            stats.hungerLevel--;
+            if (stats.hungerLevel > 0)
+                stats.hungerLevel--;
             ESP_LOGI("CoreStats", "Hunger level: %d", stats.hungerLevel);
         }
 
+        // STATE UPDATE 
+        if (stats.hungerLevel >= 75) {
+            currentState.hungerLevel = NOT_HUNGRY;
+        } else if (stats.hungerLevel >= 50) {
+            currentState.hungerLevel = SLIGHTLY_HUNGRY;
+        } else if (stats.hungerLevel >= 25) {
+            currentState.hungerLevel = HUNGRY;
+        } else {
+            currentState.hungerLevel = VERY_HUNGRY;
+        }
+
         // --------------------------- HEALTH UPDATE ---------------------------
-        switch(stats.hungerLevel){
+        // STATS UPDATE
+        switch(currentState.hungerLevel){
             case NOT_HUNGRY:
             // Increase health by 1 point every hour when not hungry {
             if (stats.healthLevel % 3600 == 0){ 
@@ -68,6 +85,18 @@ void StatsUpdate_Task(void* pvParameters) {
                     ESP_LOGI("CoreStats", "Health level: %d", stats.healthLevel);
                 }
                 break;
+        }
+
+        // STATE UPDATE
+        // Update the health level state based on the current health level
+        if (stats.healthLevel >= 75) {
+            currentState.healthLevel = HEALTHY;
+        } else if (stats.healthLevel >= 50) {
+            currentState.healthLevel = SLIGHTLY_SICK;
+        } else if (stats.healthLevel >= 25) {
+            currentState.healthLevel = SICK;
+        } else {
+            currentState.healthLevel = VERY_SICK;
         }
 
         // --------------------------- ENERGY UPDATE ---------------------------
@@ -104,25 +133,60 @@ void StatsUpdate_Task(void* pvParameters) {
 }
 
 void updateCurrentAnimation() {
+
+    // --------- Hatching animation ---------
     if (isHatching) {
         currentAnimation = &birthAnimation;
         return; // During hatching, we want to show the birth animation regardless of the state
     }
+
     // Check the current evolution stage and update the current animation accordingly
+    // ---------- Egg animation ----------
     if (currentState.evolution == EGG) {
         currentAnimation = &eggAnimation;
     } 
+    // ---------- Child animations ----------
     else if (currentState.evolution == CHILD) {
-        // 2. Controllo Stati prioritari (Malattia > Fame > Camminata)
-        if (stats.healthLevel < 20) {
-            currentAnimation = &childWalkAnimationS;
-            if (stats.hungerLevel < 40) {
-                currentAnimation = &childWalkAnimationHS;
+
+        if (isEating){
+            if (currentState.healthLevel == VERY_SICK) { // S
+                currentAnimation = &childEatAnimationS;
+                if (currentState.hungerLevel == VERY_HUNGRY) { // HS
+                    currentAnimation = &childEatAnimationHS;
+                }
+            } else if (currentState.hungerLevel == VERY_HUNGRY) { // H
+                currentAnimation = &childEatAnimationH;
+            } else {
+                currentAnimation = &childEatAnimation; // NONE
             }
-        } else if (stats.hungerLevel < 40) {
-            currentAnimation = &childWalkAnimationH;
+            currentAnimation = &childEatAnimation;
+            return;
+        }
+
+        // Moving Animations
+        if (isMoving) {    
+            if (currentState.healthLevel == VERY_SICK) { // S
+                currentAnimation = &childWalkAnimationS;
+                if (currentState.hungerLevel == VERY_HUNGRY) { // HS
+                    currentAnimation = &childWalkAnimationHS;
+                }
+            } else if (currentState.hungerLevel == VERY_HUNGRY) { // H
+                currentAnimation = &childWalkAnimationH;
+            } else {
+                currentAnimation = &childWalkAnimation; // NONE
+            }
         } else {
-            currentAnimation = &childWalkAnimation;
+            // Idle Animations
+            if (currentState.healthLevel == VERY_SICK) {
+                currentAnimation = &childIdleAnimationS;
+                if (currentState.hungerLevel == VERY_HUNGRY) {
+                    currentAnimation = &childIdleAnimationHS;
+                }
+            } else if (currentState.hungerLevel == VERY_HUNGRY) {
+                currentAnimation = &childIdleAnimationH;
+            } else {
+                currentAnimation = &childIdleAnimation;
+            }
         }
     }
 }
