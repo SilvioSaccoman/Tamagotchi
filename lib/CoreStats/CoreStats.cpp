@@ -12,6 +12,7 @@ bool isHatching = false;
 bool isHatched = false;
 bool isMoving = false;
 bool isEating = false;
+bool isSleeping = false;
 
 Animation* currentAnimation = &eggAnimation;
 int childStartTime = 0; // Variable to track the start time of the child stage
@@ -100,17 +101,40 @@ void StatsUpdate_Task(void* pvParameters) {
         }
 
         // --------------------------- ENERGY UPDATE ---------------------------
-        if (stats.life_seconds % 900 == 0 && stats.energyLevel < 100) { // Increase energy by 4 point every hour
-            stats.energyLevel++;
-            ESP_LOGI("CoreStats", "Energy level: %d", stats.energyLevel);
+        // STATS UPDATE
+        if (isSleeping){
+            if (stats.energyLevel == 100){
+                isSleeping = false; // Stop sleeping when energy is fully restored
+                ESP_LOGI("CoreStats", "Energy fully restored, waking up...");
+            }
+            if (stats.energyLevel < 100 && stats.life_seconds % 480 == 0) { // Increase energy by 60 points every 8 hours
+                stats.energyLevel++;
+                ESP_LOGI("CoreStats", "Energy level: %d", stats.energyLevel);
+            }
+        } else {
+             // Decrease energy by 80 points every 16 hours when not sleeping
+            if (stats.life_seconds % 720 == 0 && stats.energyLevel > 0) {
+                stats.energyLevel--;
+                ESP_LOGI("CoreStats", "Energy level: %d", stats.energyLevel);
+            }
         }
-
+        
+        // STATE UPDATE
+        if (stats.energyLevel >= 75) {
+            currentState.energyLevel = ENERGETIC;
+        } else if (stats.energyLevel >= 50) {
+            currentState.energyLevel = SLIGHTLY_TIRED;
+        } else if (stats.energyLevel >= 25) {
+            currentState.energyLevel = TIRED;
+        } else {
+            currentState.energyLevel = VERY_TIRED;
+        }
 
         // --------------------------- HAPPINESS UPDATE ---------------------------
 
 
         // --------------------------- EVOLUTION UPDATE ---------------------------
-        if (stats.life_seconds >= EggDuration && currentState.evolution == EGG && stats.healthLevel > 75 && !isHatched) {
+        if (stats.life_seconds >= EggDuration && currentState.evolution == EGG  && !isHatched) { 
             isHatching = true;
             isHatched = true;
             ESP_LOGI("CoreStats", "Evolution: Child");
@@ -147,22 +171,16 @@ void updateCurrentAnimation() {
     } 
     // ---------- Child animations ----------
     else if (currentState.evolution == CHILD) {
-
+        // Sleeping
+        if(isSleeping){
+            currentAnimation = &childSleepAnimation;
+            return;
+        }
+        //Eating
         if (isEating){
-            if (currentState.healthLevel == VERY_SICK) { // S
-                currentAnimation = &childEatAnimationS;
-                if (currentState.hungerLevel == VERY_HUNGRY) { // HS
-                    currentAnimation = &childEatAnimationHS;
-                }
-            } else if (currentState.hungerLevel == VERY_HUNGRY) { // H
-                currentAnimation = &childEatAnimationH;
-            } else {
-                currentAnimation = &childEatAnimation; // NONE
-            }
             currentAnimation = &childEatAnimation;
             return;
         }
-
         // Moving Animations
         if (isMoving) {    
             if (currentState.healthLevel == VERY_SICK) { // S
@@ -187,6 +205,31 @@ void updateCurrentAnimation() {
             } else {
                 currentAnimation = &childIdleAnimation;
             }
+        }
+    }
+
+    // ------------ Teen animations ------------
+    else if (currentState.evolution == TEENAGER) {
+        //Sleeping
+        if(isSleeping){
+            currentAnimation = &teenSleepAnimation;
+            return;
+        }
+        //Eating
+        if (isEating){
+            currentAnimation = &teenEatAnimation;
+            return;
+        }
+        // Moving-Idle Animations    
+        if (currentState.healthLevel == VERY_SICK) { // S
+            currentAnimation = &teenWalkAnimationS;
+            if (currentState.hungerLevel == VERY_HUNGRY) { // HS
+                currentAnimation = &teenWalkAnimationHS;
+            }
+        } else if (currentState.hungerLevel == VERY_HUNGRY) { // H
+            currentAnimation = &teenWalkAnimationH;
+        } else {
+            currentAnimation = &teenWalkAnimation; // NONE
         }
     }
 }

@@ -43,10 +43,18 @@ extern Animation childIdleAnimationS;
 extern Animation childIdleAnimationHS;
 
 extern Animation childEatAnimation; // Eating
-extern Animation childEatAnimationH;
-extern Animation childEatAnimationS;
-extern Animation childEatAnimationHS;
 
 extern Animation childSleepAnimation; // Sleeping
+
+// TEEN
+extern Animation teenWalkAnimation; // Walking
+extern Animation teenWalkAnimationH;
+extern Animation teenWalkAnimationS;
+extern Animation teenWalkAnimationHS;
+
+extern Animation teenEatAnimation; // Eating
+
+extern Animation teenSleepAnimation; // Sleeping
+
 
 #endif // SPRITES_H

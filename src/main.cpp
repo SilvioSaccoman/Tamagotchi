@@ -9,7 +9,7 @@ TFT_eSPI tft = TFT_eSPI();
 struct Stats stats = {
     .hungerLevel = 20,
     .healthLevel = 100,
-    .energyLevel = 100,
+    .energyLevel = 20,
     .happinessLevel = 100,
     .life_seconds= 0
 };
@@ -30,15 +30,17 @@ void Input_Task(void* pvParameters) {
     bool lastState = HIGH;
 
     while (1) {
-        bool currentState = digitalRead(BUTTON_RESET_PIN);
+        bool buttonState = digitalRead(BUTTON_RESET_PIN); 
         
         // Simple Debounce: Trigger on Falling Edge (Pressed)
-        if (lastState == HIGH && currentState == LOW) {
-            Eating(&stats);
+        if (lastState == HIGH && buttonState == LOW) {
+            if (currentState.evolution != EGG) {
+                Sleeping(&stats);
+            }
             vTaskDelay(pdMS_TO_TICKS(200)); // Debounce delay
         }
         
-        lastState = currentState;
+        lastState = buttonState;
         vTaskDelay(pdMS_TO_TICKS(50)); // Poll every 50ms
     }
 }

@@ -21,6 +21,7 @@ extern bool isHatching; // Flag to indicate if the hatching process has started
 extern bool isHatched; // Flag to indicate if the hatching process has completed
 extern bool isMoving; // Flag to indicate if the Tamagotchi is currently moving
 extern bool isEating; // Flag to indicate if the Tamagotchi is currently eating
+extern bool isSleeping; // Flag to indicate if the Tamagotchi is currently sleeping
 
 extern int childStartTime; // Variable to track the start time of the child stage
 

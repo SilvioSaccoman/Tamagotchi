@@ -88,20 +88,63 @@ void DisplayUpdate_Task(void* pvParameters) {
             lastEvolution = currentState.evolution;
         }
 
+        int speed = 2;
+        int moveProbability = 5; // 20% chance to start moving when idle
+
+        // --- MOVEMENT Variables ---
+        switch (currentState.energyLevel) {
+            case ENERGETIC:
+                speed = 3;
+                moveProbability = 20; // 20% chance to start moving when idle
+                break;
+            case SLIGHTLY_TIRED:
+                speed = 2;
+                moveProbability = 10; // 10% chance to start moving when idle
+                break;
+            case TIRED:
+                speed = 1; // No movement when tired
+                moveProbability = 5; // No chance to start moving when idle
+                break;
+            case VERY_TIRED:
+                speed = 0; // No movement when very tired
+                moveProbability = 0; // No chance to start moving when idle
+                break;
+        }
+
         // --- MOVEMENT LOGIC ---
         lastX = currentX;
-        if (!isHatching) {
-            if (abs(currentX - targetX) < 2) {
-                isMoving = false;
-                if (random(0, 100) < 5) {
+        if (!isHatching && !isEating && !isSleeping && speed > 0) { // Only move when not performing other activities
+            int distance = abs(currentX - targetX);
+            
+            if (distance < speed) {
+                if (isMoving) {
+                    isMoving = false;
+                    frameIdx = 0; // Reset to idle frame
+                }
+                
+                // Moved target selection outside of "if (isMoving)" 
+                // so it can trigger even when standing still
+                if (random(0, 100) < moveProbability) {
                     targetX = random(0, tft.width() - displayDim);
                 }
             } else {
-                isMoving = true;
-                if (targetX > currentX) {
-                    currentX += 2; facingLeft = false; 
+                if (!isMoving) { 
+                    isMoving = true; 
+                    frameIdx = 0; // Reset animation frame when starting to move
                 }
-                else { currentX -= 2; facingLeft = true; }
+                if (targetX > currentX) {
+                    currentX += speed; // Use speed variable for movement
+                    facingLeft = false; 
+                } else {
+                    currentX -= speed; 
+                    facingLeft = true; 
+                }
+            }
+        } else {
+            // If speed is 0 or performing an activity, ensure we are in idle state
+            if (isMoving) {
+                isMoving = false;
+                frameIdx = 0;
             }
         }
 
