@@ -13,6 +13,8 @@ bool isHatched = false;
 bool isMoving = false;
 bool isEating = false;
 bool isSleeping = false;
+bool wasSleeping = false; 
+bool wakingUp = false;
 
 Animation* currentAnimation = &eggAnimation;
 int childStartTime = 0; // Variable to track the start time of the child stage
@@ -39,7 +41,7 @@ void StatsUpdate_Task(void* pvParameters) {
         // --------------------------- HUNGER UPDATE ---------------------------
         // STATS UPDATE
         // Each 864 seconds it loses 1 point in hunger (50 points in 12 hours)
-        if (stats.life_seconds % 864 == 0) {
+        if (stats.life_seconds % HUNGER_DECREASE_S == 0) {
             if (stats.hungerLevel > 0)
                 stats.hungerLevel--;
             ESP_LOGI("CoreStats", "Hunger level: %d", stats.hungerLevel);
@@ -61,7 +63,7 @@ void StatsUpdate_Task(void* pvParameters) {
         switch(currentState.hungerLevel){
             case NOT_HUNGRY:
             // Increase health by 1 point every hour when not hungry {
-            if (stats.healthLevel % 3600 == 0){ 
+            if (stats.healthLevel % HEALTH_DE_INCREASE_S == 0){ 
                 stats.healthLevel++; 
             }
                 break;
@@ -81,7 +83,7 @@ void StatsUpdate_Task(void* pvParameters) {
                 break;
             case VERY_HUNGRY:
                 // Decrease health by 1 point every hour
-                if (stats.life_seconds % 3600 == 0) {
+                if (stats.life_seconds % HEALTH_DE_INCREASE_S == 0) {
                     stats.healthLevel--;
                     ESP_LOGI("CoreStats", "Health level: %d", stats.healthLevel);
                 }
@@ -107,13 +109,13 @@ void StatsUpdate_Task(void* pvParameters) {
                 isSleeping = false; // Stop sleeping when energy is fully restored
                 ESP_LOGI("CoreStats", "Energy fully restored, waking up...");
             }
-            if (stats.energyLevel < 100 && stats.life_seconds % 480 == 0) { // Increase energy by 60 points every 8 hours
+            if (stats.energyLevel < 100 && stats.life_seconds % ENERGY_INCREASE_S == 0) { // Increase energy by 60 points every 8 hours
                 stats.energyLevel++;
                 ESP_LOGI("CoreStats", "Energy level: %d", stats.energyLevel);
             }
         } else {
              // Decrease energy by 80 points every 16 hours when not sleeping
-            if (stats.life_seconds % 720 == 0 && stats.energyLevel > 0) {
+            if (stats.life_seconds % ENERGY_DECREASE_S == 0 && stats.energyLevel > 0) {
                 stats.energyLevel--;
                 ESP_LOGI("CoreStats", "Energy level: %d", stats.energyLevel);
             }
@@ -172,7 +174,7 @@ void updateCurrentAnimation() {
     // ---------- Child animations ----------
     else if (currentState.evolution == CHILD) {
         // Sleeping
-        if(isSleeping){
+        if(isSleeping || wakingUp){
             currentAnimation = &childSleepAnimation;
             return;
         }
@@ -211,7 +213,7 @@ void updateCurrentAnimation() {
     // ------------ Teen animations ------------
     else if (currentState.evolution == TEENAGER) {
         //Sleeping
-        if(isSleeping){
+        if(isSleeping || wakingUp){
             currentAnimation = &teenSleepAnimation;
             return;
         }

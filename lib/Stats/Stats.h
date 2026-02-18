@@ -11,10 +11,15 @@
 #define DAY_DURATION 86400 // Duration of a day in seconds
 
 #define EggDuration DAY_DURATION / 86400         // Duration of the egg stage in seconds      [1 hour]
-#define ChildDuration DAY_DURATION /86400 * 10         // Duration of the child stage in seconds    [8 days]
+#define ChildDuration DAY_DURATION /86400 * 20        // Duration of the child stage in seconds    [8 days]
 #define TeenagerDuration DAY_DURATION * 10      // Duration of the teenager stage in seconds [8 days]
 #define AdultDuration DAY_DURATION * 38        // Duration of the adult stage in seconds    [38 days]
 #define ElderDuration DAY_DURATION * 38        // Duration of the elder stage in seconds    [38 days]
+
+#define HEALTH_DE_INCREASE_S 3600 // Increase health by 1 point every hour when not hungry
+#define HUNGER_DECREASE_S 864 // Decrease hunger by 1 point every 864 seconds (50 points in 12 hours)
+#define ENERGY_INCREASE_S 480 // Increase energy by 60 points every 480 seconds (8 hours)
+#define ENERGY_DECREASE_S 720 // Decrease energy by 80 points every 720 seconds (16 hours)
 
 // Tamagotch evolution stages
 enum Evolution {

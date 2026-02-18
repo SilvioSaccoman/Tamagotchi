@@ -191,7 +191,44 @@ void DisplayUpdate_Task(void* pvParameters) {
                 frameIdx++;
             }
         } 
+        else if (isSleeping || wakingUp) {
+            // DETECT START OF SLEEP
+            if (isSleeping && !wasSleeping) {
+                frameIdx = 0; // Inizia dal primo frame
+                wasSleeping = true;
+            }
+
+            // DETECT WAKING UP (The moment isSleeping becomes false)
+            if (!isSleeping && wasSleeping) {
+                wakingUp = true;
+                wasSleeping = false;
+                // Non resettiamo frameIdx, iniziamo da dove era (2 o 3)
+            }
+
+            if (wakingUp) {
+                // PLAY BACKWARDS TO ZERO
+                if (frameIdx > 0) {
+                    frameIdx--;
+                } else {
+                    wakingUp = false; // Svegliato completamente
+                    frameIdx = 0;
+                }
+            } 
+            else {
+                // NORMAL SLEEP ANIMATION
+                if (frameIdx < 2) {
+                    // FASE 1: Play once the first frames (0, 1)
+                    frameIdx++;
+                } else {
+                    // FASE 2: Loop between last two frames (2, 3)
+                    // If frame was 2 -> 3, if was 3 -> 2
+                    frameIdx = (frameIdx == 2) ? 3 : 2;
+                }
+            }
+        }
         else {
+            // NORMAL ANIMATIONS (Idle/Walk)
+            wasSleeping = false; // Reset safe flag
             if (currentAnimation->frameCount > 0) {
                 frameIdx = (frameIdx + 1) % currentAnimation->frameCount;
             }
