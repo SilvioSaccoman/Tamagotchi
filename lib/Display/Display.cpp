@@ -47,7 +47,8 @@ void drawScaledFrame(TFT_eSprite* sprite, const uint16_t* data, bool flip, int s
 
 void DisplayUpdate_Task(void* pvParameters) {
     int frameIdx = 0;
-    int currentX = tft.width() / 2;
+    int currentScale = 1;
+    int currentX = tft.width() / 2; // Start centered
     int targetX = currentX;
     int lastX = currentX;
     bool facingLeft = false;
@@ -65,8 +66,24 @@ void DisplayUpdate_Task(void* pvParameters) {
         updateCurrentAnimation();
 
         // --- DYNAMIC SCALE & Y OFFSET SELECTOR ---
-        int currentScale = (currentState.evolution == EGG) ? 1 : 2; 
+        switch (currentState.evolution) {
+            case EGG:
+                currentScale = 1; 
+            case CHILD:
+                currentScale = 2;
+                break;
+            case TEENAGER:
+                currentScale = 2;
+                break;
+            case ADULT:
+                currentScale = 2;
+                break;
+            case ELDER:
+                currentScale = 2;
+                break;
+        }
         int displayDim = 64 * currentScale; 
+        currentX = (tft.width()-displayDim) / 2;
 
         // Vertical adjustment
         int yOffset = 0;
@@ -112,39 +129,41 @@ void DisplayUpdate_Task(void* pvParameters) {
         }
 
         // --- MOVEMENT LOGIC ---
-        lastX = currentX;
-        if (!isHatching && !isEating && !isSleeping && speed > 0) { // Only move when not performing other activities
-            int distance = abs(currentX - targetX);
-            
-            if (distance < speed) {
-                if (isMoving) {
-                    isMoving = false;
-                    frameIdx = 0; // Reset to idle frame
-                }
+        if (currentState.evolution != EGG) { // Only move if not an egg
+            lastX = currentX;
+            if (!isHatching && !isEating && !isSleeping && speed > 0) { // Only move when not performing other activities
+                int distance = abs(currentX - targetX);
                 
-                // Moved target selection outside of "if (isMoving)" 
-                // so it can trigger even when standing still
-                if (random(0, 100) < moveProbability) {
-                    targetX = random(0, tft.width() - displayDim);
+                if (distance < speed) {
+                    if (isMoving) {
+                        isMoving = false;
+                        frameIdx = 0; // Reset to idle frame
+                    }
+                    
+                    // Moved target selection outside of "if (isMoving)" 
+                    // so it can trigger even when standing still
+                    if (random(0, 100) < moveProbability) {
+                        targetX = random(0, tft.width() - displayDim);
+                    }
+                } else {
+                    if (!isMoving) { 
+                        isMoving = true; 
+                        frameIdx = 0; // Reset animation frame when starting to move
+                    }
+                    if (targetX > currentX) {
+                        currentX += speed; // Use speed variable for movement
+                        facingLeft = false; 
+                    } else {
+                        currentX -= speed; 
+                        facingLeft = true; 
+                    }
                 }
             } else {
-                if (!isMoving) { 
-                    isMoving = true; 
-                    frameIdx = 0; // Reset animation frame when starting to move
+                // If speed is 0 or performing an activity, ensure we are in idle state
+                if (isMoving) {
+                    isMoving = false;
+                    frameIdx = 0;
                 }
-                if (targetX > currentX) {
-                    currentX += speed; // Use speed variable for movement
-                    facingLeft = false; 
-                } else {
-                    currentX -= speed; 
-                    facingLeft = true; 
-                }
-            }
-        } else {
-            // If speed is 0 or performing an activity, ensure we are in idle state
-            if (isMoving) {
-                isMoving = false;
-                frameIdx = 0;
             }
         }
 
@@ -234,6 +253,6 @@ void DisplayUpdate_Task(void* pvParameters) {
             }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
