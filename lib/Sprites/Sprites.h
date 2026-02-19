@@ -56,5 +56,15 @@ extern Animation teenEatAnimation; // Eating
 
 extern Animation teenSleepAnimation; // Sleeping
 
+// ADULT
+extern Animation adultWalkAnimation; // Walking
+extern Animation adultWalkAnimationH;
+extern Animation adultWalkAnimationS;
+extern Animation adultWalkAnimationHS;
+
+extern Animation adultEatAnimation; // Eating
+
+extern Animation adultSleepAnimation; // Sleeping
+
 
 #endif // SPRITES_H

@@ -171,6 +171,7 @@ void updateCurrentAnimation() {
     if (currentState.evolution == EGG) {
         currentAnimation = &eggAnimation;
     } 
+
     // ---------- Child animations ----------
     else if (currentState.evolution == CHILD) {
         // Sleeping
@@ -232,6 +233,30 @@ void updateCurrentAnimation() {
             currentAnimation = &teenWalkAnimationH;
         } else {
             currentAnimation = &teenWalkAnimation; // NONE
+        }
+    }
+    // ------------ Adult animations ------------
+    else if (currentState.evolution == ADULT) {
+        //Sleeping
+        if(isSleeping || wakingUp){
+            currentAnimation = &adultSleepAnimation;
+            return;
+        }
+        //Eating
+        if (isEating){
+            currentAnimation = &adultEatAnimation;
+            return;
+        }
+        // Moving-Idle Animations    
+        if (currentState.healthLevel == VERY_SICK) { // S
+            currentAnimation = &adultWalkAnimationS;
+            if (currentState.hungerLevel == VERY_HUNGRY) { // HS
+                currentAnimation = &adultWalkAnimationHS;
+            }
+        } else if (currentState.hungerLevel == VERY_HUNGRY) { // H
+            currentAnimation = &adultWalkAnimationH;
+        } else {
+            currentAnimation = &adultWalkAnimation; // NONE
         }
     }
 }
