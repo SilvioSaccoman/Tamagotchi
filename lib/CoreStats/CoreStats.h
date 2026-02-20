@@ -14,6 +14,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_timer.h>
+#include "Memory.h"
 
 // Global pointer to the current animation, can be switched to change the displayed animation
 extern Animation* currentAnimation;

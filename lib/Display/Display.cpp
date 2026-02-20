@@ -60,7 +60,13 @@ void DisplayUpdate_Task(void* pvParameters) {
     const int GROUND_Y = tft.height() - 20;
 
     TamagotchiSprite.deleteSprite(); 
-    TamagotchiSprite.createSprite(128, 128); 
+    TamagotchiSprite.createSprite(192, 192); 
+
+    int speed = 2;
+    int moveProbability = 5; // 20% chance to start moving when idle
+
+    currentX = (tft.width()-64) / 2;
+    targetX = currentX;
 
     while (1) {
         updateCurrentAnimation();
@@ -69,6 +75,7 @@ void DisplayUpdate_Task(void* pvParameters) {
         switch (currentState.evolution) {
             case EGG:
                 currentScale = 1; 
+                break;
             case CHILD:
                 currentScale = 2;
                 break;
@@ -76,14 +83,26 @@ void DisplayUpdate_Task(void* pvParameters) {
                 currentScale = 2;
                 break;
             case ADULT:
-                currentScale = 2;
+                currentScale = 3;
                 break;
             case ELDER:
-                currentScale = 2;
+                currentScale = 3;
                 break;
         }
         int displayDim = 64 * currentScale; 
-        currentX = (tft.width()-displayDim) / 2;
+
+        // --- EVOLUTION CHANGE CLEANUP ---
+        // If we just evolved, clear the whole bottom area once to remove old sprite remnants
+        if (currentState.evolution != lastEvolution) {
+            tft.fillRect(0, GROUND_Y - 140, tft.width(), 145, TFT_BLACK);
+
+            currentX = (tft.width()-displayDim) / 2;
+            targetX = currentX;
+
+            lastEvolution = currentState.evolution;
+
+        }
+
 
         // Vertical adjustment
         int yOffset = 0;
@@ -97,16 +116,6 @@ void DisplayUpdate_Task(void* pvParameters) {
         int yPos = GROUND_Y - displayDim - yOffset;
 
         if (frameIdx >= currentAnimation->frameCount) frameIdx = 0;
-
-        // --- EVOLUTION CHANGE CLEANUP ---
-        // If we just evolved, clear the whole bottom area once to remove old sprite remnants
-        if (currentState.evolution != lastEvolution) {
-            tft.fillRect(0, GROUND_Y - 140, tft.width(), 145, TFT_BLACK);
-            lastEvolution = currentState.evolution;
-        }
-
-        int speed = 2;
-        int moveProbability = 5; // 20% chance to start moving when idle
 
         // --- MOVEMENT Variables ---
         switch (currentState.energyLevel) {

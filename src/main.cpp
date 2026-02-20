@@ -2,6 +2,7 @@
 #include "Display.h"
 #include "CoreStats.h"
 #include "Sprites.h"
+#include "Memory.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -46,13 +47,19 @@ void Input_Task(void* pvParameters) {
 }
 
 extern "C" void app_main() {
-    initArduino();
-    Display_init();    
+
+    // Initialization 
+    initArduino(); // Initialize Arduino framework 
+    //loadStats();   // Load stats from memory
+    Display_init(); // Initialize the display
+
     
+    // Create tasks
     xTaskCreate(Input_Task, "Input_Task", 4096, NULL, 1, NULL);
     xTaskCreate(StatsUpdate_Task, "StatsUpdate_Task", 4096, NULL, 1, NULL);
     xTaskCreatePinnedToCore(DisplayUpdate_Task, "DisplayUpdate_Task", 4096, NULL, 1, NULL, 1); // Run the display task on core 1 to avoid conflicts with the stats update task
     
+    // Main loop
     while(1) {
         ESP_LOGI("STATS", "Current_stats: Hunger: %d, Health: %d, Energy: %d, Happiness: %d, Evolution: %d", 
                 stats.hungerLevel, stats.healthLevel, stats.energyLevel, stats.happinessLevel, currentState.evolution);

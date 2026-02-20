@@ -29,11 +29,15 @@ void StatsUpdate_Task(void* pvParameters) {
     const TickType_t xFrequency = pdMS_TO_TICKS(1000);
     int64_t StartCycleTime = 0;
 
+    int secondsCounter = 0;
+    int lastEvolution = currentState.evolution;
+
     while (1) {
         // ---------------------------- TIME UPDATE ---------------------------
         // We wait for the cycle to be 1 second long
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         stats.life_seconds++;
+        secondsCounter++;
         StartCycleTime = esp_timer_get_time();
         ESP_LOGI("CoreStats", "Life seconds: %d", stats.life_seconds);
         ESP_LOGI("CoreStats", "Cycle time: %lld ms", StartCycleTime/1000);
@@ -154,6 +158,17 @@ void StatsUpdate_Task(void* pvParameters) {
         else if (stats.life_seconds - adultStartTime >= AdultDuration && currentState.evolution == ADULT && stats.healthLevel > 75) {
             currentState.evolution = ELDER;
             ESP_LOGI("CoreStats", "Evolution: Elder");
+        }
+
+        // ----------- SAVING LOGIC -----------
+        if (secondsCounter >= 900){ // Save every 15 minutes
+            saveStats();
+            secondsCounter = 0;
+        }
+
+        if (currentState.evolution != lastEvolution) {
+            saveStats(); // Save immediately on evolution change
+            lastEvolution = currentState.evolution;
         }
     }
 }
