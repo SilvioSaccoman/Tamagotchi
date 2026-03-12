@@ -34,7 +34,6 @@ void Sleeping(struct Stats* stats){
     
     if (isSleeping){
         ESP_LOGI("Sleeping", "Already sleeping");
-        isSleeping = false; // Stop sleeping if already sleeping
         return; // Already sleeping
     } else {
         isSleeping = true; // Set the sleeping flag to true to trigger the sleeping animation

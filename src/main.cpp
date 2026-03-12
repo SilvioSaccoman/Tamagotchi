@@ -3,12 +3,14 @@
 #include "CoreStats.h"
 #include "Sprites.h"
 #include "Memory.h"
+#include "Microphone.h"
+#include "LightSensor.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
 // Initialization of the stats and state
 struct Stats stats = {
-    .hungerLevel = 20,
+    .hungerLevel = 100,
     .healthLevel = 100,
     .energyLevel = 20,
     .happinessLevel = 100,
@@ -55,14 +57,19 @@ extern "C" void app_main() {
 
     
     // Create tasks
-    xTaskCreate(Input_Task, "Input_Task", 4096, NULL, 1, NULL);
+    //xTaskCreate(Input_Task, "Input_Task", 4096, NULL, 1, NULL);
     xTaskCreate(StatsUpdate_Task, "StatsUpdate_Task", 4096, NULL, 1, NULL);
+    xTaskCreate(Microphone_Task, "Microphone_Task", 4096, NULL, 1, NULL);
+    xTaskCreate(LightSensor_Task, "LightSensor_Task", 4096, NULL, 1, NULL);
     xTaskCreatePinnedToCore(DisplayUpdate_Task, "DisplayUpdate_Task", 4096, NULL, 1, NULL, 1); // Run the display task on core 1 to avoid conflicts with the stats update task
     
     // Main loop
     while(1) {
+
         ESP_LOGI("STATS", "Current_stats: Hunger: %d, Health: %d, Energy: %d, Happiness: %d, Evolution: %d", 
                 stats.hungerLevel, stats.healthLevel, stats.energyLevel, stats.happinessLevel, currentState.evolution);
+
+        ESP_LOGI("MICROPHONE", "Mic Level: %.2f\n", currentSoundLevel);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
