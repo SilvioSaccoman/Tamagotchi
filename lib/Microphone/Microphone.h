@@ -5,8 +5,8 @@
 #include <driver/i2s.h>
 
 // Definiamo i pin basandoci sui connettori CN1/P3 del CYD
-#define I2S_WS      35   // Word Select
-#define I2S_SD      27   // Serial Data
+#define I2S_WS      21   // Word Select
+#define I2S_SD      35   // Serial Data
 #define I2S_SCK     22   // Serial Clock
 #define I2S_PORT    I2S_NUM_0
 

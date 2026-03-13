@@ -5,6 +5,7 @@
 #include "Memory.h"
 #include "Microphone.h"
 #include "LightSensor.h"
+#include "Gyro.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -12,7 +13,7 @@ TFT_eSPI tft = TFT_eSPI();
 struct Stats stats = {
     .hungerLevel = 100,
     .healthLevel = 100,
-    .energyLevel = 20,
+    .energyLevel = 100,
     .happinessLevel = 100,
     .life_seconds= 0
 };
@@ -61,6 +62,7 @@ extern "C" void app_main() {
     xTaskCreate(StatsUpdate_Task, "StatsUpdate_Task", 4096, NULL, 1, NULL);
     xTaskCreate(Microphone_Task, "Microphone_Task", 4096, NULL, 1, NULL);
     xTaskCreate(LightSensor_Task, "LightSensor_Task", 4096, NULL, 1, NULL);
+    xTaskCreate(Gyroscope_Task, "Gyroscope_Task", 4096, NULL, 1, NULL);
     xTaskCreatePinnedToCore(DisplayUpdate_Task, "DisplayUpdate_Task", 4096, NULL, 1, NULL, 1); // Run the display task on core 1 to avoid conflicts with the stats update task
     
     // Main loop
