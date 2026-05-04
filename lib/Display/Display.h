@@ -9,6 +9,8 @@
 #include <TFT_eSPI.h>
 #include "Sprites.h"
 #include "CoreStats.h"
+#include "Gyro.h"
+#include "Microphone.h"
 
 void Display_init();
 void pushImageFlipped(TFT_eSprite* sprite, int32_t x, int32_t y, int32_t w, int32_t h, const uint16_t* data);

@@ -13,5 +13,6 @@ void Gyroscope_Init();
 void Gyroscope_Task(void* pvParameters);
 
 extern float gyroX, gyroY, gyroZ; // Variabili globali per il movimento
+extern int step_count; // Contatore di passi
 
 #endif // GYROSCOPE_H

@@ -2,18 +2,15 @@
 #define MICROPHONE_H
 
 #include <Arduino.h>
-#include <driver/i2s.h>
+#include "driver/gpio.h" // Aggiungi questo per il controllo diretto
 
-// Definiamo i pin basandoci sui connettori CN1/P3 del CYD
-#define I2S_WS      21   // Word Select
-#define I2S_SD      35   // Serial Data
-#define I2S_SCK     22   // Serial Clock
-#define I2S_PORT    I2S_NUM_0
+// Pin analogico per il MAX4466
+#define MIC_PIN 35 
 
-extern volatile float currentSoundLevel; // Valore attuale del livello sonoro, aggiornato dal task del microfono
+// Valore attuale del livello sonoro (Peak-to-Peak)
+extern volatile float currentSoundLevel; 
 
 void Microphone_Init();
 void Microphone_Task(void* pvParameters);
-
 
 #endif

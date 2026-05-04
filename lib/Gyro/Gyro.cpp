@@ -1,7 +1,8 @@
 #include "Gyro.h"
 
 Adafruit_MPU6050 mpu;
-float gyroX, gyroY, gyroZ;
+float accX, accY, accZ;
+int step_count = 0; // Inizializza il contatore di passi
 
 void Gyroscope_Init() {
     // Inizializziamo il bus I2C sui tuoi pin specifici
@@ -22,16 +23,36 @@ void Gyroscope_Task(void* pvParameters) {
     Gyroscope_Init();
 
     sensors_event_t a, g, temp;
+
+    float acc_filtered = 9.81;   // gravità iniziale (m/s²)
+    uint32_t last_step_time = 0;
+
     while (1) {
         mpu.getEvent(&a, &g, &temp);
 
-        // Salviamo i valori dell'accelerometro
-        gyroX = a.acceleration.x;
-        gyroY = a.acceleration.y;
-        gyroZ = a.acceleration.z;
+        float ax = a.acceleration.x;
+        float ay = a.acceleration.y;
+        float az = a.acceleration.z;
 
-        ESP_LOGI("GYRO", "Gyro X: %.2f, Gyro Y: %.2f, Gyro Z: %.2f", gyroX, gyroY, gyroZ);
+        // Magnitudine accelerazione
+        float acc_mag = sqrt(ax*ax + ay*ay + az*az);
 
-        vTaskDelay(pdMS_TO_TICKS(100)); // Leggiamo 10 volte al secondo
+        // Filtro passa-basso (stima gravità)
+        acc_filtered = 0.9 * acc_filtered + 0.1 * acc_mag;
+
+        // Componente dinamica
+        float dynamic = acc_mag - acc_filtered;
+
+        uint32_t now = millis();
+
+        // Step detection
+        if (dynamic > 1.2 && (now - last_step_time) > 300) {
+            step_count++;
+            last_step_time = now;
+
+            ESP_LOGI("STEP", "Steps: %d", step_count);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(20)); // 50 Hz
     }
 }

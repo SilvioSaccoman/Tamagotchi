@@ -53,6 +53,7 @@ extern "C" void app_main() {
 
     // Initialization 
     initArduino(); // Initialize Arduino framework 
+    esp_log_level_set("gpio", ESP_LOG_NONE);
     //loadStats();   // Load stats from memory
     Display_init(); // Initialize the display
 

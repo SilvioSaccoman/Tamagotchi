@@ -1,64 +1,47 @@
 #include "Microphone.h"
+#include "driver/gpio.h" // Aggiungi questo per il controllo diretto
 
-volatile float currentSoundLevel = 0; // Changed by the task
+volatile float currentSoundLevel = 0;
 
 void Microphone_Init() {
-    const i2s_config_t i2s_config = {
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
-    .sample_rate = 16000,
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
-    .communication_format = I2S_COMM_FORMAT_STAND_I2S,
-    .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-    .dma_buf_count = 8,
-    .dma_buf_len = 256,
-    .use_apll = false
-    };
+    // Forza la configurazione del pin per evitare il messaggio "InputEn: 0"
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = (1ULL << MIC_PIN);
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_conf);
 
-    const i2s_pin_config_t pin_config = {
-        .bck_io_num = I2S_SCK,
-        .ws_io_num = I2S_WS,
-        .data_out_num = -1, // Non usiamo l'uscita
-        .data_in_num = I2S_SD
-    };
-
-    i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
-    i2s_set_pin(I2S_PORT, &pin_config);
-    i2s_set_clk(I2S_PORT, 16000, I2S_BITS_PER_SAMPLE_32BIT, I2S_CHANNEL_MONO);
+    Serial.println("Microphone Initialized.");
 }
 
 void Microphone_Task(void* pvParameters) {
-    Microphone_Init(); // Initialization
-    
-    int32_t samples[128]; // Temporary buffer for I2S data
-    size_t bytes_read;
-
+    Microphone_Init();
+    // Riduciamo la frequenza di campionamento per non intasare i log
     while (1) {
-        // Read audio data from I2S
-        i2s_read(I2S_PORT, samples, sizeof(samples), &bytes_read, portMAX_DELAY);
+        int min_v = 4095;
+        int max_v = 0;
 
-        //printf("%d\n", samples[0]);
-        
-        if (bytes_read > 0) {
-            int num_samples = bytes_read / sizeof(int32_t);
-            float sumSquared = 0;
-
-            for (int i = 0; i < num_samples; i++) {
-            int32_t sample = samples[i] >> 8;
-            float sampleVal = (float)sample;
-            sumSquared += sampleVal * sampleVal;
-            }   
-
-            // Calculate the RMS (Root Mean Square), which is much more stable than the simple average
-            float rms = sqrt(sumSquared / num_samples);
-
-            //printf("RMS: %f\n", rms);
-            
-            // Apply a slight "smoothing" to prevent the value from jumping too quickly
-            currentSoundLevel = (currentSoundLevel * 0.7) + (rms * 0.3);
+        // Campionamento Peak-to-Peak per 20ms
+        uint32_t start = millis();
+        while (millis() - start < 20) {
+            int val = analogRead(MIC_PIN);
+            if (val > max_v) max_v = val;
+            if (val < min_v) min_v = val;
         }
 
-        // Small delay
-        vTaskDelay(pdMS_TO_TICKS(10)); 
+        int diff = max_v - min_v;
+        float level = (diff * 100.0) / 4095.0;
+
+        // Filtro passa-basso per stabilità
+        currentSoundLevel = (currentSoundLevel * 0.9) + (level * 0.1);
+
+        // Stampa solo se il livello è significativo per evitare spam
+        if (currentSoundLevel > 2.0) {
+             printf("Mic Level: %.2f\n", currentSoundLevel);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(50)); 
     }
 }

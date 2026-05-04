@@ -195,8 +195,8 @@ void DisplayUpdate_Task(void* pvParameters) {
         tft.setTextColor(TFT_WHITE, TFT_BLACK);
         tft.setCursor(0, 0);
         tft.setTextSize(2);
-        tft.printf("Hunger: %-3d\nHealth: %-3d\nEvolution: %-1d\n", 
-                   stats.hungerLevel, stats.healthLevel, currentState.evolution);
+        tft.printf("Hunger: %-3d\nHealth: %-3d\nPassi: %-1d\nMic: %.1f", 
+                   stats.hungerLevel, stats.healthLevel, step_count, currentSoundLevel);
 
         // Push to screen at the calculated yPos
         TamagotchiSprite.pushSprite(currentX, yPos);
