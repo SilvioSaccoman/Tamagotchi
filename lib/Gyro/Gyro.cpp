@@ -2,57 +2,94 @@
 
 Adafruit_MPU6050 mpu;
 float accX, accY, accZ;
-int step_count = 0; // Inizializza il contatore di passi
+volatile int step_count = 0; // Inizializza il contatore di passi
+Madgwick filter;
 
 void Gyroscope_Init() {
-    // Inizializziamo il bus I2C sui tuoi pin specifici
     Wire.begin(I2C_SDA, I2C_SCL);
 
     if (!mpu.begin()) {
-        Serial.println("ERRORE: MPU6050 non trovato!");
+        Serial.println("MPU6050 not found!");
         return;
     }
-    
-    // Impostazioni standard
+
     mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
     mpu.setGyroRange(MPU6050_RANGE_500_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+    filter.begin(50); // 50 Hz update rate
 }
+
+// Variabili globali o statiche per la validazione
+int temp_steps = 0;
+uint32_t last_step_time = 0;
+const int MIN_STEPS_BEFORE_CONFIRM = 3; // Numero di passi consecutivi per confermare la camminata
 
 void Gyroscope_Task(void* pvParameters) {
     Gyroscope_Init();
 
     sensors_event_t a, g, temp;
-
-    float acc_filtered = 9.81;   // gravità iniziale (m/s²)
-    uint32_t last_step_time = 0;
+    float filteredZ = 0;
+    float noise = 0.1f;
+    uint32_t last_step_event = 0;
 
     while (1) {
         mpu.getEvent(&a, &g, &temp);
 
-        float ax = a.acceleration.x;
-        float ay = a.acceleration.y;
-        float az = a.acceleration.z;
+        // 1. Aggiorna il filtro Madgwick
+        filter.updateIMU(g.gyro.x, g.gyro.y, g.gyro.z, a.acceleration.x, a.acceleration.y, a.acceleration.z);
 
-        // Magnitudine accelerazione
-        float acc_mag = sqrt(ax*ax + ay*ay + az*az);
+        // 2. Ottieni orientamento per proiettare l'accelerazione sulla verticale (World Z)
+        float r = filter.getRollRadians();
+        float p = filter.getPitchRadians();
+        float worldZ = a.acceleration.x * (-sin(p)) + 
+                       a.acceleration.y * (sin(r) * cos(p)) + 
+                       a.acceleration.z * (cos(r) * cos(p));
 
-        // Filtro passa-basso (stima gravità)
-        acc_filtered = 0.9 * acc_filtered + 0.1 * acc_mag;
+        // 3. Filtro passa-alto per isolare la dinamica del movimento
+        filteredZ = 0.9f * filteredZ + 0.1f * worldZ;
+        float dyn = worldZ - filteredZ;
 
-        // Componente dinamica
-        float dynamic = acc_mag - acc_filtered;
+        // 4. Calcola l'intensità della rotazione (per capire se stai agitando la mano)
+        // Somma delle velocità angolari assolute
+        float rotationIntensity = fabs(g.gyro.x) + fabs(g.gyro.y) + fabs(g.gyro.z);
+
+        // 5. Adattamento soglia (incrementata a 1.1f per essere meno sensibile ai piccoli gesti)
+        noise = 0.995f * noise + 0.005f * fabs(dyn);
+        float threshold = noise + 1.2f; 
 
         uint32_t now = millis();
+        bool peak = (dyn > threshold);
+        bool cooldown = (now - last_step_event > 300); // Impedisce di contare due volte lo stesso rimbalzo
+        
+        // Il "trucco": escludiamo picchi se c'è troppa rotazione (gesto della mano brusco)
+        bool isNotTooShaky = (rotationIntensity < 3.5f); 
 
-        // Step detection
-        if (dynamic > 1.2 && (now - last_step_time) > 300) {
-            step_count++;
+        if (peak && cooldown && isNotTooShaky && fabs(dyn) < 5.0f) {
+            uint32_t interval = now - last_step_time;
+            
+            // Validazione del ritmo umano (tra 300ms e 1000ms tra un passo e l'altro)
+            if (interval > 300 && interval < 1000) {
+                temp_steps++;
+            } else {
+                temp_steps = 1; // Ritmo perso, ricomincia il conteggio
+            }
+            
             last_step_time = now;
+            last_step_event = now;
 
-            ESP_LOGI("STEP", "Steps: %d", step_count);
+            // Conferma i passi solo se sono almeno 4 consecutivi
+            if (temp_steps >= MIN_STEPS_BEFORE_CONFIRM) {
+                if (temp_steps == MIN_STEPS_BEFORE_CONFIRM) {
+                    step_count += MIN_STEPS_BEFORE_CONFIRM; // Aggiungi il "pacchetto" iniziale
+                } else {
+                    step_count++; // Continua a contare normalmente
+                }
+                
+                ESP_LOGI("STEP", "Confermato! Totale: %d | dyn: %.2f", step_count, dyn);
+            }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(20)); // 50 Hz
+        vTaskDelay(pdMS_TO_TICKS(20)); // 50Hz
     }
 }

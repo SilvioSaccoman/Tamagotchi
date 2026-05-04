@@ -38,7 +38,7 @@ void Microphone_Task(void* pvParameters) {
         currentSoundLevel = (currentSoundLevel * 0.9) + (level * 0.1);
 
         // Stampa solo se il livello è significativo per evitare spam
-        if (currentSoundLevel > 2.0) {
+        if (currentSoundLevel > 50.0) {
              printf("Mic Level: %.2f\n", currentSoundLevel);
         }
 
