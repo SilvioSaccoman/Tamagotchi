@@ -15,6 +15,7 @@
 #include <freertos/task.h>
 #include <esp_timer.h>
 #include "Memory.h"
+#include "Gyro.h"
 
 // Global pointer to the current animation, can be switched to change the displayed animation
 extern Animation* currentAnimation;

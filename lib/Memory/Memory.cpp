@@ -11,6 +11,7 @@ void saveStats() {
     prefs.putInt("energy", currentState.energyLevel);
     prefs.putInt("happiness", currentState.happinessLevel);
     prefs.putInt("life_seconds", stats.life_seconds);
+    prefs.putInt("total_steps", stats.total_steps);
 
     // STATE
     prefs.putInt("evol", currentState.evolution);
@@ -29,7 +30,7 @@ void loadStats() {
     stats.happinessLevel = prefs.getInt("happiness", 100);
     stats.energyLevel = prefs.getInt("energy", 100);
     stats.life_seconds = prefs.getInt("life_seconds", 0);
-
+    stats.total_steps = prefs.getInt("total_steps", 0);
     //STATE
     currentState.evolution = (Evolution)prefs.getInt("evol", EGG);
     
@@ -44,7 +45,7 @@ void loadDefaultStats() {
     stats.energyLevel = 100;
     stats.happinessLevel = 100;
     stats.life_seconds = 0;
-
+    stats.total_steps = 0;
     // STATE
     currentState.evolution = EGG;
 

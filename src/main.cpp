@@ -15,7 +15,8 @@ struct Stats stats = {
     .healthLevel = 100,
     .energyLevel = 100,
     .happinessLevel = 100,
-    .life_seconds= 0
+    .life_seconds= 0,
+    .total_steps = 0
 };
 
 struct State currentState = {

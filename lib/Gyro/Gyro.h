@@ -5,6 +5,7 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <MadgwickAHRS.h>
+#include "Stats.h"
 
 // Definiamo i pin che abbiamo scelto
 #define I2C_SDA 27

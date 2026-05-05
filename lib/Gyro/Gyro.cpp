@@ -2,8 +2,9 @@
 
 Adafruit_MPU6050 mpu;
 float accX, accY, accZ;
-volatile int step_count = 0; // Inizializza il contatore di passi
 Madgwick filter;
+
+extern struct Stats stats;
 
 void Gyroscope_Init() {
     Wire.begin(I2C_SDA, I2C_SCL);
@@ -81,12 +82,12 @@ void Gyroscope_Task(void* pvParameters) {
             // Conferma i passi solo se sono almeno 4 consecutivi
             if (temp_steps >= MIN_STEPS_BEFORE_CONFIRM) {
                 if (temp_steps == MIN_STEPS_BEFORE_CONFIRM) {
-                    step_count += MIN_STEPS_BEFORE_CONFIRM; // Aggiungi il "pacchetto" iniziale
+                    stats.total_steps += MIN_STEPS_BEFORE_CONFIRM; // Aggiungi il "pacchetto" iniziale
                 } else {
-                    step_count++; // Continua a contare normalmente
+                    stats.total_steps++; // Continua a contare normalmente
                 }
-                
-                ESP_LOGI("STEP", "Confermato! Totale: %d | dyn: %.2f", step_count, dyn);
+
+                ESP_LOGI("STEP", "Confermato! Totale: %d | dyn: %.2f", stats.total_steps, dyn);
             }
         }
 

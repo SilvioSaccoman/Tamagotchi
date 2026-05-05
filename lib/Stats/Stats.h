@@ -10,16 +10,17 @@
 
 #define DAY_DURATION 86400 // Duration of a day in seconds
 
-#define EggDuration DAY_DURATION / 86400 * 10        // Duration of the egg stage in seconds      [1 hour]
-#define ChildDuration DAY_DURATION /86400 * 10        // Duration of the child stage in seconds    [8 days]
-#define TeenagerDuration DAY_DURATION /86400 * 10      // Duration of the teenager stage in seconds [8 days]
-#define AdultDuration DAY_DURATION * 38        // Duration of the adult stage in seconds    [38 days]
-#define ElderDuration DAY_DURATION * 38        // Duration of the elder stage in seconds    [38 days]
+#define EggSteps 10000        // Duration of the egg stage in steps      [1 hour]
+#define ChildSteps 80000        // Duration of the child stage in steps    [8 days]
+#define TeenagerSteps 100000      // Duration of the teenager stage in steps [8 days]
+#define AdultSteps 380000        // Duration of the adult stage in steps    [38 days]
+#define ElderSteps 380000        // Duration of the elder stage in steps    [38 days]
 
 #define HEALTH_DE_INCREASE_S 3600 // Increase health by 1 point every hour when not hungry
 #define HUNGER_DECREASE_S 864 // Decrease hunger by 1 point every 864 seconds (50 points in 12 hours)
 #define ENERGY_INCREASE_S 480 // Increase energy by 60 points every 480 seconds (8 hours)
 #define ENERGY_DECREASE_S 720 // Decrease energy by 80 points every 720 seconds (16 hours)
+#define HAPPINESS_DE_INCREASE_S 3600 // Decrease happiness by 1 point every hour when health is not healthy or hunger is not not hungry
 
 // Tamagotch evolution stages
 enum Evolution {
@@ -69,7 +70,8 @@ struct Stats
     int healthLevel;             // 0-100
     int energyLevel;             // 0-100
     int happinessLevel;          // 0-100
-    int life_seconds;
+    uint32_t life_seconds;
+    uint32_t total_steps;
 };
 
 // Current state of the Tamagotchi

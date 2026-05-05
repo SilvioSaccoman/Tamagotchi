@@ -21,9 +21,6 @@ int childStartTime = 0; // Variable to track the start time of the child stage
 
 
 void StatsUpdate_Task(void* pvParameters) {
-    // Variables to track the start time of each evolution stage
-    int teenagerStartTime = 0; // Variable to track the start time of the teenager
-    int adultStartTime = 0; // Variable to track the start time of the adult stage
 
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(1000);
@@ -67,8 +64,10 @@ void StatsUpdate_Task(void* pvParameters) {
         switch(currentState.hungerLevel){
             case NOT_HUNGRY:
             // Increase health by 1 point every hour when not hungry {
-            if (stats.healthLevel % HEALTH_DE_INCREASE_S == 0){ 
-                stats.healthLevel++; 
+            if (stats.life_seconds % HEALTH_DE_INCREASE_S == 0){ 
+                if (stats.healthLevel < 100){
+                    stats.healthLevel++; 
+                }
             }
                 break;
             case SLIGHTLY_HUNGRY:
@@ -137,25 +136,48 @@ void StatsUpdate_Task(void* pvParameters) {
         }
 
         // --------------------------- HAPPINESS UPDATE ---------------------------
+        // STATS UPDATE
+        // For simplicity, let's say happiness decreases by 1 point every hour when health is not healthy or hunger is not not hungry
+        if ((currentState.healthLevel != HEALTHY || currentState.hungerLevel != NOT_HUNGRY) && stats.life_seconds % HAPPINESS_DE_INCREASE_S == 0) {
+            if (stats.happinessLevel > 0)
+                stats.happinessLevel--;
+            ESP_LOGI("CoreStats", "Happiness level: %d", stats.happinessLevel);
+        } else {
+            if (stats.life_seconds % HAPPINESS_DE_INCREASE_S == 0){
+                if (stats.happinessLevel < 100)
+                    stats.happinessLevel++;
+                ESP_LOGI("CoreStats", "Happiness level: %d", stats.happinessLevel);
+            }
+               
+        }
+        
 
+        // STATE UPDATE
+        if (stats.happinessLevel >= 75) {
+            currentState.happinessLevel = HAPPY;
+        } else if (stats.happinessLevel >= 50) {
+            currentState.happinessLevel = SLIGHTLY_UNHAPPY;
+        } else if (stats.happinessLevel >= 25) {
+            currentState.happinessLevel = UNHAPPY;
+        } else {
+            currentState.happinessLevel = VERY_UNHAPPY;
+        }
 
         // --------------------------- EVOLUTION UPDATE ---------------------------
-        if (stats.life_seconds >= EggDuration && currentState.evolution == EGG  && !isHatched) { 
+        if (stats.total_steps >= EggSteps && currentState.evolution == EGG  && !isHatched) { 
             isHatching = true;
             isHatched = true;
             ESP_LOGI("CoreStats", "Evolution: Child");
         }
-        else if (stats.life_seconds - childStartTime >= ChildDuration && currentState.evolution == CHILD && stats.healthLevel > 75) {
+        else if (stats.total_steps - EggSteps >= ChildSteps && currentState.evolution == CHILD && stats.healthLevel > 75) {
             currentState.evolution = TEENAGER;
-            teenagerStartTime = stats.life_seconds;
             ESP_LOGI("CoreStats", "Evolution: Teenager");
         }
-        else if (stats.life_seconds - teenagerStartTime >= TeenagerDuration && currentState.evolution == TEENAGER && stats.healthLevel > 75) {
+        else if (stats.total_steps - (EggSteps + ChildSteps) >= TeenagerSteps && currentState.evolution == TEENAGER && stats.healthLevel > 75) {
             currentState.evolution = ADULT;
-            adultStartTime = stats.life_seconds;
             ESP_LOGI("CoreStats", "Evolution: Adult");
         }
-        else if (stats.life_seconds - adultStartTime >= AdultDuration && currentState.evolution == ADULT && stats.healthLevel > 75) {
+        else if (stats.total_steps - (EggSteps + ChildSteps + TeenagerSteps) >= AdultSteps && currentState.evolution == ADULT && stats.healthLevel > 75) {
             currentState.evolution = ELDER;
             ESP_LOGI("CoreStats", "Evolution: Elder");
         }
