@@ -8,7 +8,6 @@
 
 #include "Stats.h"
 #include "Sprites.h"
-#include "Activities.h"
 #include "FreeRTOSConfig.h"
 #include <freertos/portmacro.h>
 #include <freertos/FreeRTOS.h>
@@ -16,6 +15,7 @@
 #include <esp_timer.h>
 #include "Memory.h"
 #include "Gyro.h"
+#include "Display.h"
 
 // Global pointer to the current animation, can be switched to change the displayed animation
 extern Animation* currentAnimation;

@@ -16,5 +16,9 @@ void Gyroscope_Task(void* pvParameters);
 
 extern float gyroX, gyroY, gyroZ; // Variabili globali per il movimento
 extern volatile int step_count; // Contatore di passi
+extern bool isDisplayOn;
+extern uint32_t lastInteractionTime;
+extern const uint32_t DISPLAY_TIMEOUT;
+
 
 #endif // GYROSCOPE_H

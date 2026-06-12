@@ -19,7 +19,6 @@ bool wakingUp = false;
 Animation* currentAnimation = &eggAnimation;
 int childStartTime = 0; // Variable to track the start time of the child stage
 
-
 void StatsUpdate_Task(void* pvParameters) {
 
     TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -33,11 +32,19 @@ void StatsUpdate_Task(void* pvParameters) {
         // ---------------------------- TIME UPDATE ---------------------------
         // We wait for the cycle to be 1 second long
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        uint32_t now = millis();
         stats.life_seconds++;
         secondsCounter++;
         StartCycleTime = esp_timer_get_time();
         ESP_LOGI("CoreStats", "Life seconds: %d", stats.life_seconds);
         ESP_LOGI("CoreStats", "Cycle time: %lld ms", StartCycleTime/1000);
+
+        // ------------------------- DISPLAY TIMEOUT CHECK -------------------------
+        if (isDisplayOn && (now - lastInteractionTime > DISPLAY_TIMEOUT)) {
+            digitalWrite(TFT_BL, LOW); // Spegne la retroilluminazione (LED OFF)
+            isDisplayOn = false;
+            ESP_LOGI("CoreStats", "Display OFF per risparmio energetico");
+        } 
 
         // --------------------------- HUNGER UPDATE ---------------------------
         // STATS UPDATE

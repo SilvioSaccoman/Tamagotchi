@@ -4,6 +4,10 @@ Adafruit_MPU6050 mpu;
 float accX, accY, accZ;
 Madgwick filter;
 
+bool isDisplayOn = true;
+uint32_t lastInteractionTime = 0;
+const uint32_t DISPLAY_TIMEOUT = 30000;
+
 extern struct Stats stats;
 
 void Gyroscope_Init() {
@@ -88,6 +92,17 @@ void Gyroscope_Task(void* pvParameters) {
                 }
 
                 ESP_LOGI("STEP", "Confermato! Totale: %d | dyn: %.2f", stats.total_steps, dyn);
+            }
+        }
+
+        // Check Movement for Display Timeout
+                if (rotationIntensity > 1.5f) { 
+            lastInteractionTime = millis(); 
+            
+            if (!isDisplayOn) {
+                digitalWrite(TFT_BL, HIGH); // Riaccende i LED di retroilluminazione (LED ON)
+                isDisplayOn = true;
+                ESP_LOGI("Gyro", "Movimento rilevato! TFT Backlight ON");
             }
         }
 

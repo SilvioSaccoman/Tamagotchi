@@ -7,6 +7,7 @@
 #define ACTIVITIES_H
 
 #include "Stats.h"
+#include "CoreStats.h"
 
 extern bool isEating; // Flag to indicate if the Tamagotchi is currently eating
 extern bool isSleeping; // Flag to indicate if the Tamagotchi is currently sleeping
