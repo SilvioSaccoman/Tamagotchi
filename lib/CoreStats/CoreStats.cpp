@@ -125,15 +125,14 @@ void StatsUpdate_Task(void* pvParameters) {
         // --------------------------- ENERGY UPDATE ---------------------------
         // ----------------------- NOISE & WAKE UP CHECK -----------------------
         if (noiseDetected) {
-    if (isSleeping) {
+            if (isSleeping) {
 
-        isSleeping = false;
-        wakingUp = true;
-        lastWakeMillis = millis();
-    }
-
-    noiseDetected = false;
-}
+                isSleeping = false;
+                wakingUp = true;
+                lastWakeMillis = millis();
+            }
+            noiseDetected = false;
+        }
         
         // STATS UPDATE
         if (isSleeping){
@@ -207,6 +206,7 @@ void StatsUpdate_Task(void* pvParameters) {
         }
 
         // --------------------------- EVOLUTION UPDATE ---------------------------
+        // FOR DEBUGGING PURPOUSE ITS SET THAT THE TAMAGOTCHI GROWS INSTANTLY!!! needs to be set according to the number of steps.
         if (stats.total_steps >= EggSteps && currentState.evolution == EGG  && !isHatched) { 
             isHatching = true;
             isHatched = true;

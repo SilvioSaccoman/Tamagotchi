@@ -283,80 +283,27 @@ void DisplayUpdate_Task(void* pvParameters) {
         } 
         else if (isSleeping || wakingUp) {
 
-    ESP_LOGI("ANIM",
-             "ENTER sleep=%d wake=%d frame=%d wasSleeping=%d",
-             isSleeping,
-             wakingUp,
-             frameIdx,
-             wasSleeping);
-
     // CASO 1: Il Tamagotchi si sta svegliando (forzato o naturale)
     if (wakingUp) {
-
-        ESP_LOGW("ANIM",
-                 "WAKING UP -> frame=%d",
-                 frameIdx);
-
         if (frameIdx > 0) {
-
             frameIdx--;
-
-            ESP_LOGW("ANIM",
-                     "WAKE STEP -> new frame=%d",
-                     frameIdx);
-
-        } else {
-
-            ESP_LOGW("ANIM",
-                     "WAKE COMPLETE -> disabling wakingUp");
-
-            wakingUp = false;
-            wasSleeping = false;
-            isMoving = false;
-            frameIdx = 0;
-
-            ESP_LOGW("ANIM",
-                     "FINAL STATE sleep=%d wake=%d frame=%d",
-                     isSleeping,
-                     wakingUp,
-                     frameIdx);
-        }
+        } 
     }
 
     // CASO 2: Sta dormendo normalmente
     else {
 
-        ESP_LOGI("ANIM",
-                 "SLEEPING -> frame=%d wasSleeping=%d",
-                 frameIdx,
-                 wasSleeping);
-
         // Rileva il primo istante in cui si addormenta per partire dal frame 0
         if (!wasSleeping) {
-
-            ESP_LOGI("ANIM",
-                     "SLEEP START");
-
             frameIdx = 0;
             wasSleeping = true;
         }
 
         // Avanzamento normale del sonno
         if (frameIdx < 2) {
-
             frameIdx++;
-
-            ESP_LOGI("ANIM",
-                     "SLEEP FALLING ASLEEP -> frame=%d",
-                     frameIdx);
-
         } else {
-
             frameIdx = (frameIdx == 2) ? 3 : 2;
-
-            ESP_LOGI("ANIM",
-                     "SLEEP LOOP -> frame=%d",
-                     frameIdx);
         }
     }
 }
