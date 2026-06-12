@@ -11,8 +11,6 @@ extern struct State currentState;
 bool isHatching = false;
 bool isHatched = false;
 bool isMoving = false;
-bool isEating = false;
-bool isSleeping = false;
 bool wasSleeping = false; 
 bool wakingUp = false;
 

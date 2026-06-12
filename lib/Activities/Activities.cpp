@@ -27,10 +27,10 @@ void Sleeping(struct Stats* stats){
 
     int energy = stats->energyLevel;
 
-    //if (energy >= 40) {
-    //    ESP_LOGI("Sleeping", "Not tired");
-    //    return; // Not tired
-    //}
+    if (energy >= 40) {
+        ESP_LOGI("Sleeping", "Not tired");
+        return; // Not tired
+    }
     
     if (isSleeping){
         ESP_LOGI("Sleeping", "Already sleeping");
@@ -44,10 +44,3 @@ void Sleeping(struct Stats* stats){
     ESP_LOGI("Stats", "Sleeping...");
 
 }
-
-
-void Birth(struct Stats* stats){
-}
-
-
-    

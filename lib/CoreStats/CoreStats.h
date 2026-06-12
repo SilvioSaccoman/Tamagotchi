@@ -31,5 +31,7 @@ extern int childStartTime; // Variable to track the start time of the child stag
 
 void StatsUpdate_Task(void* pvParameters);
 void updateCurrentAnimation();
+void Eating(struct Stats* stats);
+void Sleeping(struct Stats* stats);
 
 #endif // CORESTATS_H

@@ -22,6 +22,9 @@
 #define ENERGY_DECREASE_S 720 // Decrease energy by 80 points every 720 seconds (16 hours)
 #define HAPPINESS_DE_INCREASE_S 3600 // Decrease happiness by 1 point every hour when health is not healthy or hunger is not not hungry
 
+extern bool isEating;
+extern bool isSleeping;
+
 // Tamagotch evolution stages
 enum Evolution {
     EGG,

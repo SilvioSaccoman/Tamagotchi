@@ -1,7 +1,7 @@
 #include "Gyro.h"
 
 Adafruit_MPU6050 mpu;
-float accX, accY, accZ;
+volatile float accTotal = 0;
 Madgwick filter;
 
 bool isDisplayOn = true;
@@ -37,6 +37,11 @@ void Gyroscope_Task(void* pvParameters) {
     float filteredZ = 0;
     float noise = 0.1f;
     uint32_t last_step_event = 0;
+    uint32_t lastTapTime = 0;
+    int tapCount = 0;
+    float lastAcc = 9.81f; // Accelerazione di gravità in m/s^2
+    float accDelta = 0;
+
 
     while (1) {
         mpu.getEvent(&a, &g, &temp);
@@ -95,6 +100,32 @@ void Gyroscope_Task(void* pvParameters) {
             }
         }
 
+        // -------------------- Eating Logic -------------------------
+        accTotal = sqrt(a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z);
+            
+        accDelta = fabs(accTotal - lastAcc);
+        lastAcc = accTotal;
+
+        now = millis();
+        if (accDelta > 6.5f && (now - lastTapTime > 100)) {
+            tapCount++;
+            lastTapTime = now;
+            ESP_LOGI("TAP", "Colpetto rilevato! (%d) Delta: %.2f", tapCount, accDelta);
+        }
+
+        // 4. Se passa più di 500ms (mezzo secondo) tra un tocco e l'altro, resetta il counter
+        if (tapCount > 0 && (now - lastTapTime > 500)) {
+        tapCount = 0;
+        }
+
+        // 5. Se fa doppio colpetto ravvicinato: PAPPA!
+        if (tapCount == 2) {
+        tapCount = 0; // Resetta subito
+        ESP_LOGI("TAP", "DOUBLE TAP CONFERMATO! Pappa in arrivo.");
+        Eating(&stats);
+        }
+
+        // -------------------- Display timeout -------------------
         // Check Movement for Display Timeout
                 if (rotationIntensity > 1.5f) { 
             lastInteractionTime = millis(); 

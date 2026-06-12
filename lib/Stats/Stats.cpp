@@ -5,6 +5,7 @@
 
 #include "Stats.h"
 
-
+bool isEating = false;
+bool isSleeping = false;
 
 

@@ -1,6 +1,7 @@
 #ifndef GYROSCOPE_H
 #define GYROSCOPE_H
 
+#include "Activities.h"
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
@@ -16,6 +17,7 @@ void Gyroscope_Task(void* pvParameters);
 
 extern float gyroX, gyroY, gyroZ; // Variabili globali per il movimento
 extern volatile int step_count; // Contatore di passi
+extern volatile float accTotal;
 extern bool isDisplayOn;
 extern uint32_t lastInteractionTime;
 extern const uint32_t DISPLAY_TIMEOUT;
