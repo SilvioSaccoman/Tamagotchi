@@ -2,6 +2,7 @@
 #include "driver/gpio.h" // Aggiungi questo per il controllo diretto
 
 volatile float currentSoundLevel = 0;
+volatile bool noiseDetected = false;
 
 void Microphone_Init() {
     // Forza la configurazione del pin per evitare il messaggio "InputEn: 0"
@@ -40,6 +41,8 @@ void Microphone_Task(void* pvParameters) {
         // Stampa solo se il livello è significativo per evitare spam
         if (currentSoundLevel > 50.0) {
              printf("Mic Level: %.2f\n", currentSoundLevel);
+             noiseDetected = true;
+
         }
 
         vTaskDelay(pdMS_TO_TICKS(50)); 

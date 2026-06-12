@@ -6,7 +6,7 @@ Madgwick filter;
 
 bool isDisplayOn = true;
 uint32_t lastInteractionTime = 0;
-const uint32_t DISPLAY_TIMEOUT = 30000;
+const uint32_t DISPLAY_TIMEOUT = 60000;
 
 extern struct Stats stats;
 

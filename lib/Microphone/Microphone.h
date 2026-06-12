@@ -9,6 +9,7 @@
 
 // Valore attuale del livello sonoro (Peak-to-Peak)
 extern volatile float currentSoundLevel; 
+extern volatile bool noiseDetected;
 
 void Microphone_Init();
 void Microphone_Task(void* pvParameters);

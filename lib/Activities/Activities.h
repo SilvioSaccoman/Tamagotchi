@@ -8,8 +8,8 @@
 
 #include "Stats.h"
 
-extern bool isEating; // Flag to indicate if the Tamagotchi is currently eating
-extern bool isSleeping; // Flag to indicate if the Tamagotchi is currently sleeping
+extern volatile bool isEating; // Flag to indicate if the Tamagotchi is currently eating
+extern volatile bool isSleeping; // Flag to indicate if the Tamagotchi is currently sleeping
 extern bool isMoving; // Flag to indicate if the Tamagotchi is currently moving
 
 void Eating(struct Stats* stats);

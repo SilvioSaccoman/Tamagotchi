@@ -5,7 +5,7 @@
 
 #include "Stats.h"
 
-bool isEating = false;
-bool isSleeping = false;
+volatile bool isEating = false;
+volatile bool isSleeping = false;
 
 

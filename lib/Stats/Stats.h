@@ -10,9 +10,9 @@
 
 #define DAY_DURATION 86400 // Duration of a day in seconds
 
-#define EggSteps 10000        // Duration of the egg stage in steps      [1 hour]
-#define ChildSteps 80000        // Duration of the child stage in steps    [8 days]
-#define TeenagerSteps 100000      // Duration of the teenager stage in steps [8 days]
+#define EggSteps 10000        // Duration of the egg stage in steps      [1 day]
+#define ChildSteps 100000        // Duration of the child stage in steps    [10 days]
+#define TeenagerSteps 200000      // Duration of the teenager stage in steps [20 days]
 #define AdultSteps 380000        // Duration of the adult stage in steps    [38 days]
 #define ElderSteps 380000        // Duration of the elder stage in steps    [38 days]
 
@@ -22,8 +22,8 @@
 #define ENERGY_DECREASE_S 720 // Decrease energy by 80 points every 720 seconds (16 hours)
 #define HAPPINESS_DE_INCREASE_S 3600 // Decrease happiness by 1 point every hour when health is not healthy or hunger is not not hungry
 
-extern bool isEating;
-extern bool isSleeping;
+extern volatile bool isEating;
+extern volatile bool isSleeping;
 
 // Tamagotch evolution stages
 enum Evolution {
@@ -31,7 +31,8 @@ enum Evolution {
     CHILD,
     TEENAGER,
     ADULT,
-    ELDER
+    ELDER,
+    DEAD
 };
 
 // Tamagotchi hungy levels
@@ -47,7 +48,7 @@ enum HealthLevel {
     HEALTHY,                    // 100-75
     SLIGHTLY_SICK,              // 74-50
     SICK,                       // 49-25
-    VERY_SICK                   // 24-0     
+    VERY_SICK                  // 24-1
 };
 
 // Tamagotchi energy levels

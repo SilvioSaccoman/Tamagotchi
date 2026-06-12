@@ -12,7 +12,9 @@ bool isHatching = false;
 bool isHatched = false;
 bool isMoving = false;
 bool wasSleeping = false; 
-bool wakingUp = false;
+volatile bool wakingUp = false;
+
+volatile uint32_t lastWakeMillis = 0;
 
 Animation* currentAnimation = &eggAnimation;
 int childStartTime = 0; // Variable to track the start time of the child stage
@@ -27,6 +29,13 @@ void StatsUpdate_Task(void* pvParameters) {
     int lastEvolution = currentState.evolution;
 
     while (1) {
+
+        // If the Tamagotchi is dead, we don't want to update its stats anymore.
+        if (currentState.evolution == DEAD) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            continue; // Salta tutto il resto del ciclo
+        }
+
         // ---------------------------- TIME UPDATE ---------------------------
         // We wait for the cycle to be 1 second long
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -107,10 +116,25 @@ void StatsUpdate_Task(void* pvParameters) {
         } else if (stats.healthLevel >= 25) {
             currentState.healthLevel = SICK;
         } else {
-            currentState.healthLevel = VERY_SICK;
+            currentState.evolution = DEAD;
+            saveStats(); // Save the final state
+            ESP_LOGI("CoreStats", "Your tamagotchi is dead...");
+            continue; // Skip the rest of the loop since the Tamagotchi is now dead
         }
 
         // --------------------------- ENERGY UPDATE ---------------------------
+        // ----------------------- NOISE & WAKE UP CHECK -----------------------
+        if (noiseDetected) {
+    if (isSleeping) {
+
+        isSleeping = false;
+        wakingUp = true;
+        lastWakeMillis = millis();
+    }
+
+    noiseDetected = false;
+}
+        
         // STATS UPDATE
         if (isSleeping){
             if (stats.energyLevel == 100){
@@ -127,6 +151,20 @@ void StatsUpdate_Task(void* pvParameters) {
                 stats.energyLevel--;
                 ESP_LOGI("CoreStats", "Energy level: %d", stats.energyLevel);
             }
+        }
+
+        // CONTROLLO SVENIMENTO
+        if (stats.energyLevel == 0 && !isSleeping) {
+            isSleeping = true; // Forziamo il sonno immediato
+            wakingUp = false;
+            stats.energyLevel = 1; 
+            // Penalità sulla salute per lo svenimento
+            if (stats.healthLevel > 20) {
+                stats.healthLevel -= 20;
+            } else {
+                stats.healthLevel = 0; // Lo svenimento è stato fatale
+            }
+            ESP_LOGE("CoreStats", "Your Tamagotchi just fainted!");
         }
         
         // STATE UPDATE
@@ -182,10 +220,10 @@ void StatsUpdate_Task(void* pvParameters) {
             currentState.evolution = ADULT;
             ESP_LOGI("CoreStats", "Evolution: Adult");
         }
-        else if (stats.total_steps - (EggSteps + ChildSteps + TeenagerSteps) >= AdultSteps && currentState.evolution == ADULT && stats.healthLevel > 75) {
-            currentState.evolution = ELDER;
-            ESP_LOGI("CoreStats", "Evolution: Elder");
-        }
+        // else if (stats.total_steps - (EggSteps + ChildSteps + TeenagerSteps) >= AdultSteps && currentState.evolution == ADULT && stats.healthLevel > 75) {
+        //     currentState.evolution = ELDER;
+        //     ESP_LOGI("CoreStats", "Evolution: Elder");
+        // }
 
         // ----------- SAVING LOGIC -----------
         if (secondsCounter >= 900){ // Save every 15 minutes
@@ -201,6 +239,11 @@ void StatsUpdate_Task(void* pvParameters) {
 }
 
 void updateCurrentAnimation() {
+
+    if (currentState.evolution == DEAD) {
+        currentAnimation = &tombAnimation;
+        return; // If dead, show tomb animation regardless of other states
+    }
 
     // --------- Hatching animation ---------
     if (isHatching) {

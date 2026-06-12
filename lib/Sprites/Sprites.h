@@ -25,6 +25,9 @@ extern const uint16_t sprite_EGG2[] PROGMEM;
 extern const uint16_t* const animEGG[] PROGMEM;
 
 // -------------- ANIMATIONS --------------
+// TOMB
+extern Animation tombAnimation;
+
 // EGG
 extern Animation eggAnimation;
 

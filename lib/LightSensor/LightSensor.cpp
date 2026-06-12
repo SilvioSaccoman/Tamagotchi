@@ -1,4 +1,5 @@
 #include "LightSensor.h"
+#include "CoreStats.h"
 
 int lightLevel = 0; // Variable to hold the current light level, updated by the LightSensor_Task
 extern struct Stats stats;
@@ -8,27 +9,59 @@ void LightSensor_Task(void* pvParameters) {
     int time_light_level = 0;
     int time_dark_level = 0;
 
+
      while (1) {
         pinMode(LDR_PIN, ANALOG); // Analog mode for the LDR pin
+
         lightLevel = analogRead(LDR_PIN); // Read the light level from the LDR sensor
 
         ESP_LOGI("LIGHT_SENSOR", "Light Level: %d\n", lightLevel);
 
-        if (lightLevel > LIGHT_THRESHOLD) { // Higher = Darker 
-            time_light_level = 0; // Reset light level timer
-            time_dark_level ++; // Increment dark level timer
-            if (time_dark_level >= LIGHT_TIME_THRESHOLD && !isSleeping) { // If it's been dark for long enough, go to sleep
-                ESP_LOGI("LIGHT_SENSOR", "It's been dark for %d seconds! Going to sleep...", time_dark_level);
-                Sleeping(&stats); // Trigger sleeping activity
-                time_dark_level = 0; // Reset dark level timer
+        if (lightLevel > LIGHT_THRESHOLD) { // ------------------ BUIO
+            time_light_level = 0; // Se è buio, resetta SEMPRE il timer della luce
+            
+            if (!isSleeping) {
+                time_dark_level++;
+                
+                // Controlla il timeout del buio
+                if (time_dark_level >= LIGHT_TIME_THRESHOLD) {
+                    // Manda a dormire solo se è effettivamente stanco (<= 40)
+                    if (stats.energyLevel <= 40) {
+                        // Prevent immediate re-sleep right after a forced wake
+                        if ((millis() - lastWakeMillis) / 1000 >= WAKE_GRACE_S) {
+                            ESP_LOGI("LIGHT_SENSOR", "Buio e stanco (Energia: %d)! Vado a dormire...", stats.energyLevel);
+                            Sleeping(&stats);
+                        } else {
+                            ESP_LOGI("LIGHT_SENSOR", "Buio ma appena svegliato: ignoro il sonno per %d s", WAKE_GRACE_S);
+                        }
+                    } else {
+                        ESP_LOGI("LIGHT_SENSOR", "E' buio, ma ho ancora troppa energia (%d) per dormire.", stats.energyLevel);
+                    }
+                    time_dark_level = 0; // Resetta il timer in ogni caso dopo la scadenza
+                }
+            } else {
+                time_dark_level = 0; // Già dorme, azzera il timer del buio
             }
-        } else {
-            time_dark_level = 0; // Reset dark level timer
-            time_light_level += 1; // Increment light level timer
-            if (time_light_level >= LIGHT_TIME_THRESHOLD && isSleeping) { // If it's been light for long enough, wake up
-                ESP_LOGI("LIGHT_SENSOR", "It's been bright for %d seconds! Waking up...", time_light_level);
-                isSleeping = false; // Wake up the Tamagotchi
-                time_light_level = 0; // Reset light level timer
+
+        } else { // --------------------------------------------- LUCE
+            time_dark_level = 0; // Se c'è luce, resetta SEMPRE il timer del buio
+            
+            if (isSleeping) {
+                time_light_level++;
+                
+                // Controlla il timeout della luce
+                if (time_light_level >= LIGHT_TIME_THRESHOLD) {
+                    // Si sveglia con la luce solo se ha recuperato abbastanza energia (>= 80)
+                    if (stats.energyLevel >= 80) {
+                        ESP_LOGI("LIGHT_SENSOR", "Luce e riposato (Energia: %d)! Sveglia!", stats.energyLevel);
+                        isSleeping = false;
+                    } else {
+                        ESP_LOGI("LIGHT_SENSOR", "C'e' luce, ma sono ancora stanco (%d). Continuo a dormire...", stats.energyLevel);
+                    }
+                    time_light_level = 0; // Resetta il timer in ogni caso dopo la scadenza
+                }
+            } else {
+                time_light_level = 0; // Già sveglio, azzera il timer della luce
             }
         }
 

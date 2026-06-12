@@ -13,14 +13,14 @@ TFT_eSPI tft = TFT_eSPI();
 struct Stats stats = {
     .hungerLevel = 100,
     .healthLevel = 100,
-    .energyLevel = 100,
+    .energyLevel = 0,
     .happinessLevel = 100,
     .life_seconds= 0,
     .total_steps = 0
 };
 
 struct State currentState = {
-    .evolution = EGG,
+    .evolution = CHILD,
     .hungerLevel = NOT_HUNGRY,
     .healthLevel = HEALTHY,
     .energyLevel = ENERGETIC,
@@ -28,27 +28,6 @@ struct State currentState = {
 };
 
 #define BUTTON_RESET_PIN 0 // Often the 'BOOT' button on ESP32 boards
-
-// Dedicated Input Task
-void Input_Task(void* pvParameters) {
-    pinMode(BUTTON_RESET_PIN, INPUT_PULLUP);
-    bool lastState = HIGH;
-
-    while (1) {
-        bool buttonState = digitalRead(BUTTON_RESET_PIN); 
-        
-        // Simple Debounce: Trigger on Falling Edge (Pressed)
-        if (lastState == HIGH && buttonState == LOW) {
-            if (currentState.evolution != EGG) {
-                Sleeping(&stats);
-            }
-            vTaskDelay(pdMS_TO_TICKS(200)); // Debounce delay
-        }
-        
-        lastState = buttonState;
-        vTaskDelay(pdMS_TO_TICKS(50)); // Poll every 50ms
-    }
-}
 
 extern "C" void app_main() {
 
@@ -60,7 +39,6 @@ extern "C" void app_main() {
 
     
     // Create tasks
-    //xTaskCreate(Input_Task, "Input_Task", 4096, NULL, 1, NULL);
     xTaskCreate(StatsUpdate_Task, "StatsUpdate_Task", 4096, NULL, 1, NULL);
     xTaskCreate(Microphone_Task, "Microphone_Task", 4096, NULL, 1, NULL);
     xTaskCreate(LightSensor_Task, "LightSensor_Task", 4096, NULL, 1, NULL);
