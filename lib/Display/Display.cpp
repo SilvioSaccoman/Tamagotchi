@@ -1,5 +1,5 @@
 /**
- * @file CoreStats.c
+ * @file Display.cpp
  * @brief This file implements the Task that handles  logic behind the Tamagotchi's stats management.
  */
 
@@ -70,11 +70,12 @@ void DisplayUpdate_Task(void* pvParameters) {
 
     // Flag per gestire la pulizia iniziale della UI di morte una sola volta
     bool deathScreenInitialized = false;
-
+    static int lastDays = -1;
+    static int lastSteps = -1;
     while (1) {
         updateCurrentAnimation();
 
-// ===================================================================
+        // ===================================================================
         // DEATH SCREEN (GAME OVER LOGIC)
         // ===================================================================
         if (currentState.evolution == DEAD) {
@@ -253,12 +254,100 @@ void DisplayUpdate_Task(void* pvParameters) {
         const uint16_t* currentFrameData = currentAnimation->frames[frameIdx];
         drawScaledFrame(&TamagotchiSprite, currentFrameData, facingLeft, currentScale);
 
-        // UI Text Standard (English)
-        tft.setTextColor(TFT_WHITE, TFT_BLACK);
-        tft.setCursor(0, 0);
-        tft.setTextSize(2);
-        tft.printf("Hunger: %-3d\nHealth: %-3d\nSteps: %-1d\nMic: %.1f\naccTotal: %.2f", 
-                    stats.hungerLevel, stats.healthLevel, stats.total_steps, currentSoundLevel, accTotal);
+        // // UI Text Standard (English)
+        // tft.setTextColor(TFT_WHITE, TFT_BLACK);
+        // tft.setCursor(0, 0);
+        // tft.setTextSize(2);
+        // tft.printf("Hunger: %-3d\nHealth: %-3d\nSteps: %-1d\nMic: %.1f\naccTotal: %.2f", 
+        //             stats.hungerLevel, stats.healthLevel, stats.total_steps, currentSoundLevel, accTotal);
+
+
+        int currentDays = (int)(stats.life_seconds / 86400);
+        int currentSteps = stats.total_steps;
+
+        int barHeight = 44; // Alzata a 44px per ospitare comodamente il testo Size 2
+        int boxWidth = 72;  // Allargata a 72px per contenere numeri grandi senza collisioni
+
+        // ==========================================
+        // 1. RIQUADRO SINISTRA: GIORNI (Calendario stretto + Numero Size 2)
+        // ==========================================
+        if (currentDays != lastDays) {
+            int leftX = 6; // Margine dal bordo sinistro
+            
+            // Cancella l'area del riquadro
+            tft.fillRect(leftX, 0, boxWidth, barHeight, TFT_BLACK);
+            
+            // Icona Calendario Più Stretta (Larghezza: 15px, Altezza: 14px)
+            int calX = leftX + (boxWidth - 15) / 2; // Centratura orizzontale
+            int calY = 4;
+            tft.drawRect(calX, calY + 3, 15, 11, TFT_WHITE); // Corpo stretto
+            tft.fillRect(calX + 2, calY, 2, 4, TFT_WHITE);  // Anello sx
+            tft.fillRect(calX + 11, calY, 2, 4, TFT_WHITE); // Anello dx
+            tft.drawPixel(calX + 5, calY + 7, TFT_WHITE);   // Puntino interno 1
+            tft.drawPixel(calX + 9, calY + 10, TFT_WHITE);  // Puntino interno 2
+            
+            // Configura testo BIG
+            tft.setTextSize(2); // <--- Grandezza raddoppiata!
+            tft.setTextColor(TFT_WHITE, TFT_BLACK);
+            
+            // Calcola larghezza (A Size 2, ogni carattere occupa 12 pixel in larghezza)
+            char daysStr[8];
+            sprintf(daysStr, "%d", currentDays);
+            int textWidth = strlen(daysStr) * 12;
+            
+            // Stampa il numero centrato sotto il calendario
+            tft.setCursor(leftX + (boxWidth - textWidth) / 2, 24);
+            tft.print(daysStr);
+            
+            lastDays = currentDays;
+        }
+
+        // ==========================================
+        // 2. RIQUADRO DESTRA: PASSI (Zampina + Numero Size 2)
+        // ==========================================
+        if (currentSteps != lastSteps) {
+            int rightX = tft.width() - boxWidth - 6; // Bordo destro
+            
+            // Cancella l'area del riquadro
+            tft.fillRect(rightX, 0, boxWidth, barHeight, TFT_BLACK);
+            
+            // Icona Zampina di Animale (Larghezza: 14px, Altezza: 11px)
+            int pawX = rightX + (boxWidth - 14) / 2; // Centrata nel riquadro
+            int pawY = 4;
+            
+            // I 4 polpastrelli superiori (piccoli blocchi 2x2)
+            tft.fillRect(pawX,       pawY + 3, 2, 2, TFT_WHITE); // Dito esterno sx
+            tft.fillRect(pawX + 3,   pawY,     2, 2, TFT_WHITE); // Dito interno sx
+            tft.fillRect(pawX + 9,   pawY,     2, 2, TFT_WHITE); // Dito interno dx
+            tft.fillRect(pawX + 12,  pawY + 3, 2, 2, TFT_WHITE); // Dito esterno dx
+            
+            // Il grande cuscinetto centrale inferiore (metacarpale)
+            tft.fillRect(pawX + 3,   pawY + 6, 8, 5, TFT_WHITE); // Blocco principale
+            tft.drawPixel(pawX + 2,  pawY + 8, TFT_WHITE);       // Arrotondamento sx
+            tft.drawPixel(pawX + 11, pawY + 8, TFT_WHITE);       // Arrotondamento dx
+            
+            // Configura testo BIG
+            tft.setTextSize(2); // <--- Grandezza raddoppiata!
+            tft.setTextColor(TFT_WHITE, TFT_BLACK);
+            
+            // Calcola larghezza dinamica dei passi (caratteri * 12 pixel)
+            char stepsStr[12];
+            sprintf(stepsStr, "%d", currentSteps);
+            int textWidth = strlen(stepsStr) * 12;
+            
+            // Stampa il passo centrato sotto la zampina
+            tft.setCursor(rightX + (boxWidth - textWidth) / 2, 24);
+            tft.print(stepsStr);
+            
+            lastSteps = currentSteps;
+        }
+
+        // ==========================================
+        // 3. LINEA DI CHIUSURA BARRA (Abbassata a Y=44)
+        // ==========================================
+        if (currentDays != lastDays || currentSteps != lastSteps) {
+            tft.drawFastHLine(0, 44, tft.width(), TFT_WHITE);
+        }
 
         // Push to screen
         TamagotchiSprite.pushSprite(currentX, yPos);

@@ -13,14 +13,14 @@ TFT_eSPI tft = TFT_eSPI();
 struct Stats stats = {
     .hungerLevel = 100,
     .healthLevel = 100,
-    .energyLevel = 20,
+    .energyLevel = 100,
     .happinessLevel = 100,
     .life_seconds= 0,
     .total_steps = 0
 };
 
 struct State currentState = {
-    .evolution = CHILD,
+    .evolution = ELDER,
     .hungerLevel = NOT_HUNGRY,
     .healthLevel = HEALTHY,
     .energyLevel = ENERGETIC,

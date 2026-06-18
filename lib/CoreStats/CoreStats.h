@@ -38,7 +38,12 @@ extern volatile uint32_t lastWakeMillis;
 
 void StatsUpdate_Task(void* pvParameters);
 void updateCurrentAnimation();
-void Eating(struct Stats* stats);
-void Sleeping(struct Stats* stats);
+static void update_display_timeout(uint32_t now);
+static void update_hunger(void);
+static bool update_health(void);
+static void update_energy(void);
+static void update_happiness(void);
+static void update_evolution(void);
+static void handle_saving(int* secondsCounter, int* lastEvolution);
 
 #endif // CORESTATS_H
