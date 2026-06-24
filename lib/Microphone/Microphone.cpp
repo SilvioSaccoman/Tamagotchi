@@ -1,10 +1,20 @@
 #include "Microphone.h"
-#include "driver/gpio.h" // Aggiungi questo per il controllo diretto
+#include "driver/gpio.h" 
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 volatile float currentSoundLevel = 0;
 volatile bool noiseDetected = false;
 
+// Allocazione globale del Mutex condiviso per l'ADC1
+SemaphoreHandle_t adcMutex = NULL;
+
 void Microphone_Init() {
+    // Inizializza il Mutex se non è ancora stato creato dall'altro task
+    if (adcMutex == NULL) {
+        adcMutex = xSemaphoreCreateMutex();
+    }
+
     // Forza la configurazione del pin per evitare il messaggio "InputEn: 0"
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -19,7 +29,7 @@ void Microphone_Init() {
 
 void Microphone_Task(void* pvParameters) {
     Microphone_Init();
-    // Riduciamo la frequenza di campionamento per non intasare i log
+    
     while (1) {
         int min_v = 4095;
         int max_v = 0;
@@ -27,9 +37,19 @@ void Microphone_Task(void* pvParameters) {
         // Campionamento Peak-to-Peak per 20ms
         uint32_t start = millis();
         while (millis() - start < 20) {
-            int val = analogRead(MIC_PIN);
+            int val = 0;
+
+            // Protezione dell'ADC tramite Mutex
+            if (xSemaphoreTake(adcMutex, portMAX_DELAY) == pdTRUE) {
+                val = analogRead(MIC_PIN);
+                xSemaphoreGive(adcMutex); // Rilascia subito per dare spazio ad altri task
+            }
+
             if (val > max_v) max_v = val;
             if (val < min_v) min_v = val;
+            
+            // Pausa micro-secondaria per far respirare l'hardware e cambiare canale ADC
+            delayMicroseconds(100); 
         }
 
         int diff = max_v - min_v;
@@ -42,7 +62,6 @@ void Microphone_Task(void* pvParameters) {
         if (currentSoundLevel > 50.0) {
              printf("Mic Level: %.2f\n", currentSoundLevel);
              noiseDetected = true;
-
         }
 
         vTaskDelay(pdMS_TO_TICKS(50)); 

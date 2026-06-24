@@ -14,6 +14,7 @@ TFT_eSprite TamagotchiSprite = TFT_eSprite(&tft); // Create the sprite
 void Display_init() {
     tft.init();
     tft.setRotation(0); // 0 = Vertical (Portrait), 1 = Horizontal (Landscape), 2 = Vertical Inverted, 3 = Horizontal Inverted
+    //tft.invertDisplay(true);
     tft.fillScreen(TFT_BLACK);
     TamagotchiSprite.createSprite(64, 64); // Allocate 32x32 pixel in RAM 
 };

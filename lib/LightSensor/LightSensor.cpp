@@ -1,18 +1,32 @@
 #include "LightSensor.h"
 #include "CoreStats.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 int lightLevel = 0; // Variable to hold the current light level, updated by the LightSensor_Task
 extern struct Stats stats;
 
+// Riferimento al Mutex allocato nel modulo del microfono
+extern SemaphoreHandle_t adcMutex;
+
 void LightSensor_Task(void* pvParameters) {
     
+    // Sicurezza: se questo task parte prima del microfono, crea lui il Mutex
+    if (adcMutex == NULL) {
+        adcMutex = xSemaphoreCreateMutex();
+    }
+
     int time_light_level = 0;
     int time_dark_level = 0;
 
-
-     while (1) {
+    while (1) {
         
-        lightLevel = analogRead(LDR_PIN); // Read the light level from the LDR sensor
+        // Protezione dell'ADC tramite Mutex
+        if (xSemaphoreTake(adcMutex, portMAX_DELAY) == pdTRUE) {
+            lightLevel = analogRead(LDR_PIN); // Read the light level from the LDR sensor
+            xSemaphoreGive(adcMutex);         // Rilascia immediatamente l'ADC
+        }
+
         ESP_LOGI("LIGHT_SENSOR", "Light Level: %d\n", lightLevel);
 
         if (lightLevel > LIGHT_THRESHOLD) { // ------------------ BUIO

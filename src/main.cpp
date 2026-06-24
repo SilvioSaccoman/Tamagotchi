@@ -34,7 +34,11 @@ extern "C" void app_main() {
     // Initialization 
     initArduino(); // Initialize Arduino framework 
     esp_log_level_set("gpio", ESP_LOG_NONE);
+    
     //loadStats();   // Load stats from memory
+    // if (currentState.evolution == DEAD) {
+    //     loadDefaultStats(); // If dead, reset to default stats
+    // }
     Display_init(); // Initialize the display
 
     
@@ -51,7 +55,8 @@ extern "C" void app_main() {
         ESP_LOGI("STATS", "Current_stats: Hunger: %d, Health: %d, Energy: %d, Happiness: %d, Evolution: %d", 
                 stats.hungerLevel, stats.healthLevel, stats.energyLevel, stats.happinessLevel, currentState.evolution);
 
-        ESP_LOGI("MICROPHONE", "Mic Level: %.2f\n", currentSoundLevel);
+    //    ESP_LOGI("MICROPHONE", "Mic Level: %.2f\n", currentSoundLevel);
+
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
